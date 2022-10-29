@@ -2,7 +2,7 @@
  * @Author: atdow
  * @Date: 2022-10-29 19:56:13
  * @LastEditors: null
- * @LastEditTime: 2022-10-30 03:30:54
+ * @LastEditTime: 2022-10-30 04:11:44
  * @Description: file description
  */
 const fs = require("fs");
@@ -21,7 +21,9 @@ const util = {
       (item) => item.uri.path
     );
     if (workspaceFolders.length !== 1) {
-      this.showError("暂不支持多工作区！");
+      this.showError(
+        "vue jumper暂不支持多工作区(vue jumper not support multi workspaceFolders)！"
+      );
       return "";
     }
     const currentFile = (document.uri ? document.uri : document).fsPath;
@@ -34,6 +36,18 @@ const util = {
     );
     const currentFilePathArr = currentFilePath.split("/");
     return currentFilePathArr.slice(0, currentFilePathArr.length - 1).join("/");
+  },
+  /**
+   * 弹出错误信息
+   */
+  showError: function (info) {
+    vscode.window.showErrorMessage(info);
+  },
+  /**
+   * 弹出提示信息
+   */
+  showInfo: function (info) {
+    vscode.window.showInformationMessage(info);
   },
 };
 
