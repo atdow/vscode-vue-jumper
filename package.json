@@ -52,7 +52,7 @@
           "items": {
             "type": "string"
           },
-          "description": "A list of extensions that should be tried for finding peeked files. These are tried in order as further extensions of the potential file name and also as alternative file endings instead of the existing file extension (if available)."
+          "description": "A list of extensions that should be tried for finding jumped files. These are tried in order as further extensions of the potential file name and also as alternative file endings instead of the existing file extension (if available)."
         }
       }
     }
@@ -68,7 +68,7 @@
     "typescript": "^2.0.3",
     "vscode": "^1.0.0",
     "mocha": "^2.3.3",
-    "@types/node": "^6.0.40",
+    "@types/node": "6.0.40",
     "@types/mocha": "^2.2.32"
   },
   "__npminstall_done": false

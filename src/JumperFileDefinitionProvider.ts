@@ -2,12 +2,12 @@
  * @Author: atdow
  * @Date: 2017-08-21 14:59:59
  * @LastEditors: null
- * @LastEditTime: 2022-10-29 17:24:18
+ * @LastEditTime: 2022-10-29 17:57:08
  * @Description: file description
  */
 import * as vscode from "vscode";
 
-export default class PeekFileDefinitionProvider
+export default class JumperFileDefinitionProvider
   implements vscode.DefinitionProvider
 {
   targetFileExtensions: string[] = [];
