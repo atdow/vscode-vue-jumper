@@ -2,7 +2,7 @@
  * @Author: atdow
  * @Date: 2017-08-21 14:59:59
  * @LastEditors: null
- * @LastEditTime: 2022-10-29 20:15:51
+ * @LastEditTime: 2022-10-30 03:38:55
  * @Description: file description
  */
 import * as vscode from "vscode";
@@ -95,12 +95,10 @@ export default class JumperFileDefinitionProvider
       }
       simplePath = path.replace(/\.\.\//, "").replace(/\.\//, ""); // 清除相对路径
       const purePath = path.replace(/^[\.]\//, ""); // 清除./
-      const fileName = document.fileName;
-      const workDir = pathUtil.dirname(fileName);
-      const projectPath = util.getProjectPath(document);
-      const rootPath = workDir.slice(projectPath.length + 1);
-      // console.log("rootPath:", rootPath);
+
+      const rootPath = util.getCurrentDir(document);
       const rootPathArr = rootPath.split("/");
+
       // 带../相对路径
       if (purePath.match(/\.\.\//)) {
         const appendPath = purePath.replace(/\.\.\//, "");
