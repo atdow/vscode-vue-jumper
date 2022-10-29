@@ -53,6 +53,16 @@
             "type": "string"
           },
           "description": "A list of extensions that should be tried for finding jumped files. These are tried in order as further extensions of the potential file name and also as alternative file endings instead of the existing file extension (if available)."
+        },
+        "vue-jumper.aliasConfigs": {
+          "type": "array",
+          "default": [
+            "@:src"
+          ],
+          "items": {
+            "type": "string"
+          },
+          "description": "import alias config"
         }
       }
     }

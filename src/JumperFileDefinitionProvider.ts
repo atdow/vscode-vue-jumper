@@ -2,25 +2,57 @@
  * @Author: atdow
  * @Date: 2017-08-21 14:59:59
  * @LastEditors: null
- * @LastEditTime: 2022-10-29 17:57:08
+ * @LastEditTime: 2022-10-29 19:01:17
  * @Description: file description
  */
 import * as vscode from "vscode";
+
+interface IAliasConfigsItem {
+  alias: string;
+  target: string;
+}
 
 export default class JumperFileDefinitionProvider
   implements vscode.DefinitionProvider
 {
   targetFileExtensions: string[] = [];
+  aliasConfigs: IAliasConfigsItem[] = [];
 
-  constructor(targetFileExtensions: string[] = []) {
+  constructor(
+    targetFileExtensions: string[] = [],
+    aliasConfigs: string[] = []
+  ) {
     this.targetFileExtensions = targetFileExtensions;
+    // this.aliasConfigs = aliasConfigs;
+    aliasConfigs.forEach((aliasConfigsItem) => {
+      try {
+        const aliasConfigsItemArr = aliasConfigsItem.split(":");
+        if (aliasConfigsItemArr && aliasConfigsItemArr.length === 2) {
+          this.aliasConfigs.push({
+            alias: aliasConfigsItemArr[0],
+            target: aliasConfigsItemArr[1],
+          });
+        }
+      } catch (error) {
+        // console.log("aliasConfigs:", aliasConfigs);
+      }
+    });
   }
 
   judeLineType(line: String, text: string, document) {
-    const lineInfo: any = {
-      // type: "import",
-      // path: "",
-      // simplePath: ""
+    const that = this;
+    const lineInfo: {
+      type: string;
+      path: String;
+      simplePath: string;
+      hasAlias: Boolean;
+      aliasPath: string;
+    } = {
+      type: "",
+      path: "",
+      simplePath: "",
+      hasAlias: false,
+      aliasPath: "",
     };
     if (!line) {
       return lineInfo;
@@ -29,13 +61,18 @@ export default class JumperFileDefinitionProvider
     // import 类型
     if (pureLine.startsWith("import")) {
       lineInfo.type = "import";
-      const { path, simplePath } = importTypeAnalysis(pureLine);
+      const { path, simplePath, hasAlias, aliasPath } =
+        importTypeAnalysis(pureLine);
       lineInfo.path = path;
       lineInfo.simplePath = simplePath;
+      lineInfo.hasAlias = hasAlias;
+      lineInfo.aliasPath = aliasPath;
     }
     function importTypeAnalysis(pureLine) {
       let path = "";
       let simplePath = "";
+      let aliasPath = "";
+      let hasAlias = false;
       // "xxx"
       if (pureLine.match(/\"([^\"]*)\"/)) {
         const pathArr = pureLine.match(/\"([^\"]*)\"/);
@@ -50,8 +87,25 @@ export default class JumperFileDefinitionProvider
           path = pathArr.find((item) => !item.match(/'/));
         }
       }
-      simplePath = path.replace(/\.\.\//, "").replace(/\.\//, "");
-      return { path, simplePath };
+      simplePath = path.replace(/\.\.\//, "").replace(/\.\//, ""); // 清除相对路径
+      // simplePath = path; // 清除相对路径
+
+      // alias别名替换
+      that.aliasConfigs.forEach((aliasConfigsItem) => {
+        if (path.startsWith(aliasConfigsItem.alias)) {
+          hasAlias = true;
+          simplePath = path.replace(
+            new RegExp(`${aliasConfigsItem.alias}\/`),
+            ""
+          );
+          aliasPath = path.replace(
+            new RegExp(`${aliasConfigsItem.alias}`),
+            aliasConfigsItem.target
+          );
+        }
+        // console.log("@:", path);
+      });
+      return { path, simplePath, hasAlias, aliasPath };
     }
     // 标签类型
     if (pureLine.startsWith("<")) {
@@ -83,9 +137,13 @@ export default class JumperFileDefinitionProvider
         );
         // console.log("importLine:", importLine);
         if (importLine) {
-          const { path, simplePath } = importTypeAnalysis(importLine.trim());
+          const { path, simplePath, hasAlias, aliasPath } = importTypeAnalysis(
+            importLine.trim()
+          );
           lineInfo.path = path;
           lineInfo.simplePath = simplePath;
+          lineInfo.hasAlias = hasAlias;
+          lineInfo.aliasPath = aliasPath;
         }
       }
     }
@@ -98,35 +156,23 @@ export default class JumperFileDefinitionProvider
     const selectedText = doc.getText(selection);
     let lineText = doc.lineAt(position).text;
     const lineInfo = this.judeLineType(lineText, selectedText, document);
-    // console.log("lineText:", lineText);
-    console.log("lineInfo:", lineInfo);
-    let possibleFileNames = [],
-      altName = "";
-    if (lineInfo.type === "import") {
-      const simplePath = lineInfo.simplePath;
-      possibleFileNames.push(simplePath + ".vue");
-      possibleFileNames.push(simplePath + "/index.vue");
-    } else if (lineInfo.type === "tag") {
-      const simplePath = lineInfo.simplePath;
-      possibleFileNames.push(simplePath + ".vue");
-      possibleFileNames.push(simplePath + "/index.vue");
+    // console.log("lineInfo:", lineInfo);
+    const { type, path, simplePath, hasAlias, aliasPath } = lineInfo;
+    let possibleFileNames = [];
+    if (type === "import" || type === "tag") {
+      if (hasAlias) {
+        possibleFileNamesAdd(aliasPath);
+      }
+      possibleFileNamesAdd(simplePath);
     }
-
-    // console.log('position:',position)
-    // console.log('selection:',selection)
-    // console.log('selectedText:',selectedText)
-    // console.log('rowText:',rowText)
-    // selectedText.match(/\w+/g).forEach(str => {
-    //   return altName += str[0].toUpperCase() + str.substring(1);
-    // })
-    // console.log("this.targetFileExtensions:", this.targetFileExtensions);
-
-    this.targetFileExtensions.forEach((ext) => {
-      possibleFileNames.push(selectedText + ext);
-      possibleFileNames.push(selectedText + "/index" + ext);
-      possibleFileNames.push(altName + ext);
-      possibleFileNames.push(altName + "/index" + ext);
-    });
+    function possibleFileNamesAdd(originPath) {
+      possibleFileNames.push(originPath + ".vue");
+      possibleFileNames.push(originPath + "/index.vue");
+      possibleFileNames.push(originPath + ".js");
+      possibleFileNames.push(originPath + "/index.js");
+      possibleFileNames.push(originPath + ".jsx");
+      possibleFileNames.push(originPath + "/index.jsx");
+    }
 
     return possibleFileNames;
   }
@@ -143,8 +189,6 @@ export default class JumperFileDefinitionProvider
     let filePaths = [];
     const componentNames = this.getComponentName(position, document);
     // console.log("componentNames:", componentNames);
-    // console.log("this.searchFilePath:", this.searchFilePath);
-    // console.log("filePaths:", filePaths);
     const searchPathActions = componentNames.map(this.searchFilePath);
     const searchPromises = Promise.all(searchPathActions); // pass array of promises
 
