@@ -2,7 +2,7 @@
  * @Author: atdow
  * @Date: 2017-08-21 14:59:59
  * @LastEditors: null
- * @LastEditTime: 2022-10-30 03:57:26
+ * @LastEditTime: 2022-10-30 04:05:17
  * @Description: file description
  */
 import * as vscode from "vscode";
@@ -65,8 +65,11 @@ export default class JumperFileDefinitionProvider
     // import 类型
     if (pureLine.startsWith("import")) {
       lineInfo.type = "import";
+      lineTextUpdateLineInfo(pureLine);
+    }
+    function lineTextUpdateLineInfo(lineText) {
       const { path, simplePath, hasAlias, aliasPath, absolutePath } =
-        importTypeAnalysis(pureLine);
+        importTypeAnalysis(lineText);
       lineInfo.path = path;
       lineInfo.simplePath = simplePath;
       lineInfo.hasAlias = hasAlias;
@@ -160,13 +163,7 @@ export default class JumperFileDefinitionProvider
         );
         // console.log("importLine:", importLine);
         if (importLine) {
-          const { path, simplePath, hasAlias, aliasPath, absolutePath } =
-            importTypeAnalysis(importLine.trim());
-          lineInfo.path = path;
-          lineInfo.simplePath = simplePath;
-          lineInfo.hasAlias = hasAlias;
-          lineInfo.aliasPath = aliasPath;
-          lineInfo.absolutePath = absolutePath;
+          lineTextUpdateLineInfo(importLine.trim());
         }
       }
     }
