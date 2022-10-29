@@ -2,7 +2,7 @@
  * @Author: atdow
  * @Date: 2017-08-21 14:59:59
  * @LastEditors: null
- * @LastEditTime: 2022-10-30 03:38:55
+ * @LastEditTime: 2022-10-30 03:57:26
  * @Description: file description
  */
 import * as vscode from "vscode";
@@ -153,9 +153,10 @@ export default class JumperFileDefinitionProvider
       const json = document.getText();
       // 查找标签引入地方
       if (json.match(/import.+'/)) {
-        const importArr = json.match(/import.+'/g);
+        const importArr = json.match(/[^//]import.+'/g);
         const importLine = importArr.find(
-          (item) => item.indexOf(formatText) !== -1
+          (item) =>
+            item.indexOf(formatText) !== -1 && !item.trim().startsWith("//")
         );
         // console.log("importLine:", importLine);
         if (importLine) {
