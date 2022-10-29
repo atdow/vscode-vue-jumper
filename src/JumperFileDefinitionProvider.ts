@@ -2,10 +2,12 @@
  * @Author: atdow
  * @Date: 2017-08-21 14:59:59
  * @LastEditors: null
- * @LastEditTime: 2022-10-29 19:01:17
+ * @LastEditTime: 2022-10-29 20:15:51
  * @Description: file description
  */
 import * as vscode from "vscode";
+const pathUtil = require("path");
+const util = require("./util");
 
 interface IAliasConfigsItem {
   alias: string;
@@ -47,12 +49,14 @@ export default class JumperFileDefinitionProvider
       simplePath: string;
       hasAlias: Boolean;
       aliasPath: string;
+      absolutePath: string;
     } = {
       type: "",
       path: "",
       simplePath: "",
       hasAlias: false,
       aliasPath: "",
+      absolutePath: "",
     };
     if (!line) {
       return lineInfo;
@@ -61,18 +65,20 @@ export default class JumperFileDefinitionProvider
     // import 类型
     if (pureLine.startsWith("import")) {
       lineInfo.type = "import";
-      const { path, simplePath, hasAlias, aliasPath } =
+      const { path, simplePath, hasAlias, aliasPath, absolutePath } =
         importTypeAnalysis(pureLine);
       lineInfo.path = path;
       lineInfo.simplePath = simplePath;
       lineInfo.hasAlias = hasAlias;
       lineInfo.aliasPath = aliasPath;
+      lineInfo.absolutePath = absolutePath;
     }
     function importTypeAnalysis(pureLine) {
       let path = "";
       let simplePath = "";
       let aliasPath = "";
       let hasAlias = false;
+      let absolutePath = "";
       // "xxx"
       if (pureLine.match(/\"([^\"]*)\"/)) {
         const pathArr = pureLine.match(/\"([^\"]*)\"/);
@@ -88,7 +94,25 @@ export default class JumperFileDefinitionProvider
         }
       }
       simplePath = path.replace(/\.\.\//, "").replace(/\.\//, ""); // 清除相对路径
-      // simplePath = path; // 清除相对路径
+      const purePath = path.replace(/^[\.]\//, ""); // 清除./
+      const fileName = document.fileName;
+      const workDir = pathUtil.dirname(fileName);
+      const projectPath = util.getProjectPath(document);
+      const rootPath = workDir.slice(projectPath.length + 1);
+      // console.log("rootPath:", rootPath);
+      const rootPathArr = rootPath.split("/");
+      // 带../相对路径
+      if (purePath.match(/\.\.\//)) {
+        const appendPath = purePath.replace(/\.\.\//, "");
+        const pathMeshArr = purePath.match(/\.\.\//);
+        const prefixPath = rootPathArr
+          .slice(0, rootPathArr.length - pathMeshArr.length)
+          .join("/");
+        absolutePath = `${prefixPath}/${appendPath}`;
+      } else {
+        // 当前目录下
+        absolutePath = `${rootPath}/${purePath}`;
+      }
 
       // alias别名替换
       that.aliasConfigs.forEach((aliasConfigsItem) => {
@@ -105,7 +129,7 @@ export default class JumperFileDefinitionProvider
         }
         // console.log("@:", path);
       });
-      return { path, simplePath, hasAlias, aliasPath };
+      return { path, simplePath, hasAlias, aliasPath, absolutePath };
     }
     // 标签类型
     if (pureLine.startsWith("<")) {
@@ -137,13 +161,13 @@ export default class JumperFileDefinitionProvider
         );
         // console.log("importLine:", importLine);
         if (importLine) {
-          const { path, simplePath, hasAlias, aliasPath } = importTypeAnalysis(
-            importLine.trim()
-          );
+          const { path, simplePath, hasAlias, aliasPath, absolutePath } =
+            importTypeAnalysis(importLine.trim());
           lineInfo.path = path;
           lineInfo.simplePath = simplePath;
           lineInfo.hasAlias = hasAlias;
           lineInfo.aliasPath = aliasPath;
+          lineInfo.absolutePath = absolutePath;
         }
       }
     }
@@ -157,13 +181,17 @@ export default class JumperFileDefinitionProvider
     let lineText = doc.lineAt(position).text;
     const lineInfo = this.judeLineType(lineText, selectedText, document);
     // console.log("lineInfo:", lineInfo);
-    const { type, path, simplePath, hasAlias, aliasPath } = lineInfo;
+    const { type, path, simplePath, hasAlias, aliasPath, absolutePath } =
+      lineInfo;
     let possibleFileNames = [];
     if (type === "import" || type === "tag") {
       if (hasAlias) {
         possibleFileNamesAdd(aliasPath);
+      } else {
+        possibleFileNamesAdd(absolutePath);
       }
-      possibleFileNamesAdd(simplePath);
+      // console.log("absolutePath:", absolutePath);
+      // possibleFileNamesAdd(simplePath);
     }
     function possibleFileNamesAdd(originPath) {
       possibleFileNames.push(originPath + ".vue");
