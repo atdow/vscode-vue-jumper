@@ -2,7 +2,7 @@
  * @Author: atdow
  * @Date: 2017-08-21 14:59:59
  * @LastEditors: null
- * @LastEditTime: 2022-10-30 04:05:17
+ * @LastEditTime: 2022-10-31 00:40:11
  * @Description: file description
  */
 import * as vscode from "vscode";
@@ -25,7 +25,6 @@ export default class JumperFileDefinitionProvider
     aliasConfigs: string[] = []
   ) {
     this.targetFileExtensions = targetFileExtensions;
-    // this.aliasConfigs = aliasConfigs;
     aliasConfigs.forEach((aliasConfigsItem) => {
       try {
         const aliasConfigsItemArr = aliasConfigsItem.split(":");
@@ -41,7 +40,7 @@ export default class JumperFileDefinitionProvider
     });
   }
 
-  judeLineType(line: String, text: string, document) {
+  judeLineType(line: String, keyword: string, document) {
     const that = this;
     const lineInfo: {
       type: string;
@@ -67,6 +66,17 @@ export default class JumperFileDefinitionProvider
       lineInfo.type = "import";
       lineTextUpdateLineInfo(pureLine);
     }
+    // 标签类型
+    if (pureLine.startsWith("<")) {
+      lineInfo.type = "tag";
+      const importLine = util.documentTextFindComponentImportLine(
+        document.getText(),
+        util.upperCamelCaseTagName(keyword)
+      );
+      if (importLine) {
+        lineTextUpdateLineInfo(importLine.trim());
+      }
+    }
     function lineTextUpdateLineInfo(lineText) {
       const { path, simplePath, hasAlias, aliasPath, absolutePath } =
         importTypeAnalysis(lineText);
@@ -76,99 +86,48 @@ export default class JumperFileDefinitionProvider
       lineInfo.aliasPath = aliasPath;
       lineInfo.absolutePath = absolutePath;
     }
-    function importTypeAnalysis(pureLine) {
+    function importTypeAnalysis(importLine) {
       let path = "";
       let simplePath = "";
       let aliasPath = "";
       let hasAlias = false;
       let absolutePath = "";
-      // "xxx"
-      if (pureLine.match(/\"([^\"]*)\"/)) {
-        const pathArr = pureLine.match(/\"([^\"]*)\"/);
-        if (pathArr && pathArr.length > 0) {
-          path = pathArr.find((item) => !item.match(/\"/));
-        }
-      }
-      // 'xxx'
-      if (pureLine.match(/'([^\']*)'/)) {
-        const pathArr = pureLine.match(/'([^\']*)'/);
-        if (pathArr && pathArr.length > 0) {
-          path = pathArr.find((item) => !item.match(/'/));
-        }
-      }
-      simplePath = path.replace(/\.\.\//, "").replace(/\.\//, ""); // 清除相对路径
-      const purePath = path.replace(/^[\.]\//, ""); // 清除./
 
-      const rootPath = util.getCurrentDir(document);
-      const rootPathArr = rootPath.split("/");
+      const originImportPath = util.importLineFindOriginImportPath(importLine);
+      const pureOriginImportPath = originImportPath.replace(/^[\.]\//, ""); // 清除./
+      const currentDirPath = util.getCurrentDir(document);
 
       // 带../相对路径
-      if (purePath.match(/\.\.\//)) {
-        const appendPath = purePath.replace(/\.\.\//, "");
-        const pathMeshArr = purePath.match(/\.\.\//);
-        const prefixPath = rootPathArr
-          .slice(0, rootPathArr.length - pathMeshArr.length)
+      if (pureOriginImportPath.match(/\.\.\//)) {
+        const appendPath = pureOriginImportPath.replace(/\.\.\//, ""); // 去除../
+        const pathMeshArr = pureOriginImportPath.match(/\.\.\//);
+        const currentDirPathArr = currentDirPath.split("/");
+        // 相对目录路径
+        const prefixPath = currentDirPathArr
+          .slice(0, currentDirPathArr.length - pathMeshArr.length)
           .join("/");
         absolutePath = `${prefixPath}/${appendPath}`;
       } else {
         // 当前目录下
-        absolutePath = `${rootPath}/${purePath}`;
+        absolutePath = `${currentDirPath}/${pureOriginImportPath}`;
       }
 
       // alias别名替换
       that.aliasConfigs.forEach((aliasConfigsItem) => {
-        if (path.startsWith(aliasConfigsItem.alias)) {
+        if (originImportPath.startsWith(aliasConfigsItem.alias)) {
           hasAlias = true;
-          simplePath = path.replace(
-            new RegExp(`${aliasConfigsItem.alias}\/`),
-            ""
-          );
-          aliasPath = path.replace(
+          aliasPath = originImportPath.replace(
             new RegExp(`${aliasConfigsItem.alias}`),
             aliasConfigsItem.target
           );
         }
-        // console.log("@:", path);
       });
       return { path, simplePath, hasAlias, aliasPath, absolutePath };
     }
-    // 标签类型
-    if (pureLine.startsWith("<")) {
-      lineInfo.type = "tag";
-      let formatText = text;
-      // my-components(<my-components></my-components>形式标签)转MyComponents(<MyComponents></MyComponents>形式标签)
-      if (formatText.indexOf("-") !== -1) {
-        let myText = "";
-        const textCharArr = text.split("");
-        for (let i = 0; i < textCharArr.length; i++) {
-          if (i === 0) {
-            myText += textCharArr[i].toUpperCase();
-          } else if (textCharArr[i] === "-") {
-            textCharArr[i + 1] = textCharArr[i + 1].toUpperCase();
-          } else {
-            myText += textCharArr[i];
-          }
-        }
-        formatText = myText;
-      }
-      // console.log("tag-----------------:");
-      // console.log("formatText:", formatText);
-      const json = document.getText();
-      // 查找标签引入地方
-      if (json.match(/import.+'/)) {
-        const importArr = json.match(/[^//]import.+'/g);
-        const importLine = importArr.find(
-          (item) =>
-            item.indexOf(formatText) !== -1 && !item.trim().startsWith("//")
-        );
-        // console.log("importLine:", importLine);
-        if (importLine) {
-          lineTextUpdateLineInfo(importLine.trim());
-        }
-      }
-    }
     return lineInfo;
   }
+
+  lineTextToLineInfo(line) {}
 
   getComponentName(position: vscode.Position, document): String[] {
     const doc = vscode.window.activeTextEditor.document;
