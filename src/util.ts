@@ -2,7 +2,7 @@
  * @Author: atdow
  * @Date: 2022-10-29 19:56:13
  * @LastEditors: null
- * @LastEditTime: 2022-10-30 04:11:44
+ * @LastEditTime: 2022-10-30 19:17:59
  * @Description: file description
  */
 const fs = require("fs");
@@ -20,22 +20,24 @@ const util = {
     let workspaceFolders = vscode.workspace.workspaceFolders.map(
       (item) => item.uri.path
     );
-    if (workspaceFolders.length !== 1) {
-      this.showError(
-        "vue jumper暂不支持多工作区(vue jumper not support multi workspaceFolders)！"
-      );
-      return "";
-    }
     const currentFile = (document.uri ? document.uri : document).fsPath;
     let formatCurrentFile = currentFile;
     if (this.isWindows()) {
       formatCurrentFile = "/" + currentFile.replace(/\\/g, "/");
     }
+    // 当前工作区
+    let currentWorkspaceFolder = "";
+    workspaceFolders.forEach((workspaceFoldersItem) => {
+      if (formatCurrentFile.indexOf(workspaceFoldersItem) === 0) {
+        currentWorkspaceFolder = workspaceFoldersItem;
+      }
+    });
+    // 这里多了一层目录，也就是当前文件名
     const currentFilePath = formatCurrentFile.slice(
-      workspaceFolders[0].length + 1
+      currentWorkspaceFolder.length + 1
     );
     const currentFilePathArr = currentFilePath.split("/");
-    return currentFilePathArr.slice(0, currentFilePathArr.length - 1).join("/");
+    return currentFilePathArr.slice(0, currentFilePathArr.length - 1).join("/"); // 去除当前文件名并返回
   },
   /**
    * 弹出错误信息
