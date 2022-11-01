@@ -2,7 +2,7 @@
  * @Author: atdow
  * @Date: 2017-08-21 14:59:59
  * @LastEditors: null
- * @LastEditTime: 2022-11-01 22:26:40
+ * @LastEditTime: 2022-11-02 00:06:18
  * @Description: file description
  */
 import * as vscode from "vscode";
@@ -56,6 +56,9 @@ export default class JumperFileDefinitionProvider
     }
     const pureLine = line.trim();
     const importObj = util.documentFindAllImport(document, that.aliasConfigs);
+    const registerComponentsObj =
+      util.documentFindRegisterComponentsObj(document);
+    // console.log("registerComponentsObj:", registerComponentsObj);
     // import 类型
     if (pureLine.startsWith("import")) {
       lineInfo.type = "import";

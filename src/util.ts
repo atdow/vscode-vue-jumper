@@ -2,7 +2,7 @@
  * @Author: atdow
  * @Date: 2022-10-29 19:56:13
  * @LastEditors: null
- * @LastEditTime: 2022-11-01 22:28:54
+ * @LastEditTime: 2022-11-02 00:04:26
  * @Description: file description
  */
 const fs = require("fs");
@@ -118,6 +118,58 @@ const util = {
       });
       documentImportObj[key].path = absolutePath;
     });
+  },
+  documentFindRegisterComponentsObj(document) {
+    const documentText = document.getText();
+    /**
+      匹配到以下结果:
+      components: { 's-component': SComponent, MyComponent }
+
+      components: { 
+        // 我是注释
+        's-component': SComponent, // 我是注释
+        MyComponent 
+      }
+     */
+    const componentsCombine = documentText.match(
+      /components[\s\S]*?:[\s\S]*?{[\s\S]*?}/g
+    );
+    // console.log("componentsCombine:", componentsCombine);
+    if (componentsCombine.length > 0) {
+      /**
+        匹配到以下结果:
+        { 's-component': SComponent, MyComponent }
+
+        { 
+          // 我是注释
+          's-component': SComponent, // 我是注释
+          MyComponent 
+        }
+       */
+      const componentObjStrArr = componentsCombine[1].match(/{[\s\S]*?}/);
+      let componentObjStr = "";
+      if (componentObjStrArr.length > 0) {
+        componentObjStr = componentObjStrArr[0];
+      }
+      // ["s-component: SComponent", "MyComponent"]
+      const componentArr = componentObjStr
+        .replace(/(\n+)|(\/{2,}.*?(\r|\n))|(\/\*(\n|.)*?\*\/)/g, "") // 去掉注释
+        .replace(/[{}'"]/g, "") // 去掉花括号、'、"
+        .split(",")
+        .map((item) => item.trim());
+      // console.log("componentArr:", componentArr);
+      const registerComponentsObj = {};
+      componentArr.forEach((item) => {
+        const splitArr = item.split(":");
+        if (splitArr.length === 2) {
+          registerComponentsObj[splitArr[0].trim()] = splitArr[1].trim();
+        } else {
+          registerComponentsObj[splitArr[0].trim()] = splitArr[0].trim();
+        }
+      });
+      return registerComponentsObj;
+      // console.log("componentsObj:", componentsObj);
+    }
   },
   /**
    * 将tagName转成大驼峰
