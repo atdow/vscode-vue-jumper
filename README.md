@@ -27,3 +27,7 @@ import MyComponent form '@/component/MyComponent'
 默认配置了 `@:src` ，如果有需要，请到插件配置中设置aliasConfigs：
 
 格式： `别名名称:目标路径`
+
+# 版本
+* 1.1.0 支持多workspaceFolders工作区跳转
+* 1.0.0 支持基础跳转
