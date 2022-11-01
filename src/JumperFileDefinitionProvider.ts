@@ -2,7 +2,7 @@
  * @Author: atdow
  * @Date: 2017-08-21 14:59:59
  * @LastEditors: null
- * @LastEditTime: 2022-10-31 00:40:11
+ * @LastEditTime: 2022-11-01 22:26:40
  * @Description: file description
  */
 import * as vscode from "vscode";
@@ -45,90 +45,39 @@ export default class JumperFileDefinitionProvider
     const lineInfo: {
       type: string;
       path: String;
-      simplePath: string;
-      hasAlias: Boolean;
-      aliasPath: string;
-      absolutePath: string;
+      originPath: string;
     } = {
       type: "",
       path: "",
-      simplePath: "",
-      hasAlias: false,
-      aliasPath: "",
-      absolutePath: "",
+      originPath: "",
     };
     if (!line) {
       return lineInfo;
     }
     const pureLine = line.trim();
+    const importObj = util.documentFindAllImport(document, that.aliasConfigs);
     // import 类型
     if (pureLine.startsWith("import")) {
       lineInfo.type = "import";
-      lineTextUpdateLineInfo(pureLine);
+      Object.keys(importObj).forEach((componentName) => {
+        if (componentName === keyword) {
+          lineInfo.originPath = importObj[componentName].originPath;
+          lineInfo.path = importObj[componentName].path;
+        }
+      });
     }
     // 标签类型
     if (pureLine.startsWith("<")) {
       lineInfo.type = "tag";
-      const importLine = util.documentTextFindComponentImportLine(
-        document.getText(),
-        util.upperCamelCaseTagName(keyword)
-      );
-      if (importLine) {
-        lineTextUpdateLineInfo(importLine.trim());
-      }
-    }
-    function lineTextUpdateLineInfo(lineText) {
-      const { path, simplePath, hasAlias, aliasPath, absolutePath } =
-        importTypeAnalysis(lineText);
-      lineInfo.path = path;
-      lineInfo.simplePath = simplePath;
-      lineInfo.hasAlias = hasAlias;
-      lineInfo.aliasPath = aliasPath;
-      lineInfo.absolutePath = absolutePath;
-    }
-    function importTypeAnalysis(importLine) {
-      let path = "";
-      let simplePath = "";
-      let aliasPath = "";
-      let hasAlias = false;
-      let absolutePath = "";
-
-      const originImportPath = util.importLineFindOriginImportPath(importLine);
-      const pureOriginImportPath = originImportPath.replace(/^[\.]\//, ""); // 清除./
-      const currentDirPath = util.getCurrentDir(document);
-
-      // 带../相对路径
-      if (pureOriginImportPath.match(/\.\.\//)) {
-        const appendPath = pureOriginImportPath.replace(/\.\.\//, ""); // 去除../
-        const pathMeshArr = pureOriginImportPath.match(/\.\.\//);
-        const currentDirPathArr = currentDirPath.split("/");
-        // 相对目录路径
-        const prefixPath = currentDirPathArr
-          .slice(0, currentDirPathArr.length - pathMeshArr.length)
-          .join("/");
-        absolutePath = `${prefixPath}/${appendPath}`;
-      } else {
-        // 当前目录下
-        absolutePath = `${currentDirPath}/${pureOriginImportPath}`;
-      }
-
-      // alias别名替换
-      that.aliasConfigs.forEach((aliasConfigsItem) => {
-        if (originImportPath.startsWith(aliasConfigsItem.alias)) {
-          hasAlias = true;
-          aliasPath = originImportPath.replace(
-            new RegExp(`${aliasConfigsItem.alias}`),
-            aliasConfigsItem.target
-          );
+      Object.keys(importObj).forEach((componentName) => {
+        if (componentName === util.upperCamelCaseTagName(keyword)) {
+          lineInfo.originPath = importObj[componentName].originPath;
+          lineInfo.path = importObj[componentName].path;
         }
       });
-      return { path, simplePath, hasAlias, aliasPath, absolutePath };
     }
     return lineInfo;
   }
-
-  lineTextToLineInfo(line) {}
-
   getComponentName(position: vscode.Position, document): String[] {
     const doc = vscode.window.activeTextEditor.document;
     const selection = doc.getWordRangeAtPosition(position);
@@ -136,17 +85,10 @@ export default class JumperFileDefinitionProvider
     let lineText = doc.lineAt(position).text;
     const lineInfo = this.judeLineType(lineText, selectedText, document);
     // console.log("lineInfo:", lineInfo);
-    const { type, path, simplePath, hasAlias, aliasPath, absolutePath } =
-      lineInfo;
+    const { type, path, originPath } = lineInfo;
     let possibleFileNames = [];
     if (type === "import" || type === "tag") {
-      if (hasAlias) {
-        possibleFileNamesAdd(aliasPath);
-      } else {
-        possibleFileNamesAdd(absolutePath);
-      }
-      // console.log("absolutePath:", absolutePath);
-      // possibleFileNamesAdd(simplePath);
+      possibleFileNamesAdd(path);
     }
     function possibleFileNamesAdd(originPath) {
       possibleFileNames.push(originPath + ".vue");

@@ -2,7 +2,7 @@
  * @Author: atdow
  * @Date: 2022-10-29 19:56:13
  * @LastEditors: null
- * @LastEditTime: 2022-10-31 00:11:23
+ * @LastEditTime: 2022-11-01 22:28:54
  * @Description: file description
  */
 const fs = require("fs");
@@ -56,6 +56,68 @@ const util = {
         importArr.find((item) => item.indexOf(componentName) !== -1) || "";
     }
     return importLine;
+  },
+  documentFindAllImport(document, aliasConfigs): object {
+    const documentText = document.getText();
+    const obj = {};
+    // console.log("documentText:", documentText);
+    if (documentText.match(/import.+'/)) {
+      const importArr = documentText.match(/[^//]import.+'/g);
+      importArr.forEach((importLineItem) => {
+        let componentName = "";
+        const path = this.importLineFindOriginImportPath(importLineItem);
+        const tagSliceArr = importLineItem.match(/import.*?from/) || []; // ['import componentName from']
+        if (tagSliceArr.length > 0) {
+          // ['import', 'componentName', 'from']
+          componentName = (tagSliceArr[0].match(/[a-zA-Z0-9_]+/g) || []).find(
+            (item) => item.trim() !== "import" && item.trim() !== "from"
+          );
+        }
+        if (componentName) {
+          obj[componentName] = { originPath: path };
+        }
+        // console.log("componentName:", componentName);
+      });
+    }
+    this.documentImportObjAddPath(document, obj, aliasConfigs);
+    // console.log("obj:", obj);
+    return obj;
+  },
+  documentImportObjAddPath(
+    document,
+    documentImportObj = {},
+    aliasConfigs = []
+  ) {
+    Object.keys(documentImportObj).forEach((key) => {
+      let absolutePath = "";
+      const originImportPath = documentImportObj[key].originPath;
+      const pureOriginImportPath = originImportPath.replace(/^[\.]\//, ""); // 清除./
+      const currentDirPath = this.getCurrentDir(document);
+      // 带../相对路径
+      if (pureOriginImportPath.match(/\.\.\//)) {
+        const appendPath = pureOriginImportPath.replace(/\.\.\//, ""); // 去除../
+        const pathMeshArr = pureOriginImportPath.match(/\.\.\//);
+        const currentDirPathArr = currentDirPath.split("/");
+        // 相对目录路径
+        const prefixPath = currentDirPathArr
+          .slice(0, currentDirPathArr.length - pathMeshArr.length)
+          .join("/");
+        absolutePath = `${prefixPath}/${appendPath}`;
+      } else {
+        // 当前目录下
+        absolutePath = `${currentDirPath}/${pureOriginImportPath}`;
+      }
+      // alias别名替换
+      aliasConfigs.forEach((aliasConfigsItem) => {
+        if (originImportPath.startsWith(aliasConfigsItem.alias)) {
+          absolutePath = originImportPath.replace(
+            new RegExp(`${aliasConfigsItem.alias}`),
+            aliasConfigsItem.target
+          );
+        }
+      });
+      documentImportObj[key].path = absolutePath;
+    });
   },
   /**
    * 将tagName转成大驼峰
