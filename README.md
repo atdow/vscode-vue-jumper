@@ -1,3 +1,11 @@
+<!--
+ * @Author: atdow
+ * @Date: 2022-11-01 21:07:59
+ * @LastEditors: null
+ * @LastEditTime: 2022-11-03 20:10:17
+ * @Description: file description
+-->
+
 # vscode-vue-jumper
 
 vue文件跳转到文件定义支持。支持标签跳转、import相对路径文件跳转、import别名路径文件跳转。
@@ -28,6 +36,8 @@ import MyComponent form '@/component/MyComponent'
 
 格式： `别名名称:目标路径`
 
-# 版本
+## 版本
+
+* 1.2.0 增加组件重命名跳转
 * 1.1.0 支持多workspaceFolders工作区跳转
 * 1.0.0 支持基础跳转
