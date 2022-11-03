@@ -2,7 +2,7 @@
  * @Author: atdow
  * @Date: 2017-08-21 14:59:59
  * @LastEditors: null
- * @LastEditTime: 2022-11-03 23:06:02
+ * @LastEditTime: 2022-11-04 00:13:10
  * @Description: file description
  */
 import * as vscode from "vscode";
@@ -57,7 +57,7 @@ export default class JumperFileDefinitionProvider
     const pureLine = line.trim();
     const importObj = util.documentFindAllImport(document, that.aliasConfigs);
     const registerComponentsObj =
-      util.documentFindRegisterComponentsObj(document);
+      util.documentFindRegisterComponentsObj(document) || {};
     // console.log("registerComponentsObj:", registerComponentsObj);
     // import 类型
     if (pureLine.startsWith("import")) {
@@ -86,6 +86,11 @@ export default class JumperFileDefinitionProvider
           importObj,
           lineInfo
         );
+      }
+      // 从mixins中找
+      if (!lineInfo.path) {
+        const mixins = util.documentFindMixins(document) || [];
+        // console.log("mixins:", mixins);
       }
     }
     return lineInfo;
