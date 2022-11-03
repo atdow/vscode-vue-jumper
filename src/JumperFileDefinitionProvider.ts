@@ -2,7 +2,7 @@
  * @Author: atdow
  * @Date: 2017-08-21 14:59:59
  * @LastEditors: null
- * @LastEditTime: 2022-11-02 00:06:18
+ * @LastEditTime: 2022-11-03 20:01:53
  * @Description: file description
  */
 import * as vscode from "vscode";
@@ -62,25 +62,43 @@ export default class JumperFileDefinitionProvider
     // import 类型
     if (pureLine.startsWith("import")) {
       lineInfo.type = "import";
-      Object.keys(importObj).forEach((componentName) => {
-        if (componentName === keyword) {
-          lineInfo.originPath = importObj[componentName].originPath;
-          lineInfo.path = importObj[componentName].path;
-        }
-      });
+      this.componentNameInImportObjUpdateLineInfo(keyword, importObj, lineInfo);
     }
     // 标签类型
     if (pureLine.startsWith("<")) {
       lineInfo.type = "tag";
-      Object.keys(importObj).forEach((componentName) => {
-        if (componentName === util.upperCamelCaseTagName(keyword)) {
-          lineInfo.originPath = importObj[componentName].originPath;
-          lineInfo.path = importObj[componentName].path;
-        }
-      });
+      let searchComponentName = util.upperCamelCaseTagName(keyword);
+      // 直接从importObj中查找
+      this.componentNameInImportObjUpdateLineInfo(
+        searchComponentName,
+        importObj,
+        lineInfo
+      );
+      // 从components中查找(组件重命名情况) components: { RenameMyComponent: MyComponent, 's-my-component2': MyComponent2 }
+      if (!lineInfo.path) {
+        Object.keys(registerComponentsObj).forEach((key) => {
+          if (key === searchComponentName || key === keyword) {
+            searchComponentName = registerComponentsObj[key];
+          }
+        });
+        this.componentNameInImportObjUpdateLineInfo(
+          searchComponentName,
+          importObj,
+          lineInfo
+        );
+      }
     }
     return lineInfo;
   }
+  componentNameInImportObjUpdateLineInfo(componentName, importObj, lineInfo) {
+    Object.keys(importObj).forEach((key) => {
+      if (key === componentName) {
+        lineInfo.originPath = importObj[componentName].originPath;
+        lineInfo.path = importObj[componentName].path;
+      }
+    });
+  }
+
   getComponentName(position: vscode.Position, document): String[] {
     const doc = vscode.window.activeTextEditor.document;
     const selection = doc.getWordRangeAtPosition(position);
