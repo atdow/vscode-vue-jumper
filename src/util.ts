@@ -2,7 +2,7 @@
  * @Author: atdow
  * @Date: 2022-10-29 19:56:13
  * @LastEditors: null
- * @LastEditTime: 2022-11-02 00:04:26
+ * @LastEditTime: 2022-11-03 22:11:29
  * @Description: file description
  */
 const fs = require("fs");
@@ -132,7 +132,7 @@ const util = {
       }
      */
     const componentsCombine = documentText.match(
-      /components[\s\S]*?:[\s\S]*?{[\s\S]*?}/g
+      /components[\s]?:[\s\S]*?{[\s\S]*?}/g
     );
     // console.log("componentsCombine:", componentsCombine);
     if (componentsCombine.length > 0) {
@@ -146,7 +146,7 @@ const util = {
           MyComponent 
         }
        */
-      const componentObjStrArr = componentsCombine[1].match(/{[\s\S]*?}/);
+      const componentObjStrArr = componentsCombine[0].match(/{[\s\S]*?}/);
       let componentObjStr = "";
       if (componentObjStrArr.length > 0) {
         componentObjStr = componentObjStrArr[0];
