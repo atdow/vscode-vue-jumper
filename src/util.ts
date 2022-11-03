@@ -2,7 +2,7 @@
  * @Author: atdow
  * @Date: 2022-10-29 19:56:13
  * @LastEditors: null
- * @LastEditTime: 2022-11-03 22:42:58
+ * @LastEditTime: 2022-11-04 00:05:03
  * @Description: file description
  */
 const fs = require("fs");
@@ -170,6 +170,30 @@ const util = {
       return registerComponentsObj;
       // console.log("componentsObj:", componentsObj);
     }
+  },
+  documentFindMixins(document) {
+    const documentText = document.getText();
+    const mixinsCombine = documentText.match(
+      /mixins[\s]?:[\s\S]*?\[[\s\S]*?\]/g
+    );
+    // console.log("mixinsCombine:", mixinsCombine);
+    if (mixinsCombine && mixinsCombine.length > 0) {
+      const mixinsStrArr = mixinsCombine[0].match(/\[[\s\S]*?\]/);
+      let mixinsStr = "";
+      if (mixinsStrArr.length > 0) {
+        mixinsStr = mixinsStrArr[0];
+        const mixins = mixinsStr
+          .replace(/(\n+)|(\/{2,}.*?(\r|\n))|(\/\*(\n|.)*?\*\/)/g, "") // 去掉注释
+          .replace(/[\[\]]/g, "") // 去掉[、]
+          .split(",")
+          .map((item) => item.trim())
+          .filter((item) => !!item);
+        return mixins;
+      } else {
+        return [];
+      }
+    }
+    return [];
   },
   /**
    * 将tagName转成大驼峰
