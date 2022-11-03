@@ -2,7 +2,7 @@
  * @Author: atdow
  * @Date: 2017-08-21 14:59:59
  * @LastEditors: null
- * @LastEditTime: 2022-11-03 20:01:53
+ * @LastEditTime: 2022-11-03 23:06:02
  * @Description: file description
  */
 import * as vscode from "vscode";
@@ -112,12 +112,22 @@ export default class JumperFileDefinitionProvider
       possibleFileNamesAdd(path);
     }
     function possibleFileNamesAdd(originPath) {
-      possibleFileNames.push(originPath + ".vue");
-      possibleFileNames.push(originPath + "/index.vue");
-      possibleFileNames.push(originPath + ".js");
-      possibleFileNames.push(originPath + "/index.js");
-      possibleFileNames.push(originPath + ".jsx");
-      possibleFileNames.push(originPath + "/index.jsx");
+      if (!path) {
+        return;
+      }
+      if (!path.endsWith(".vue")) {
+        possibleFileNames.push(path + ".vue");
+        possibleFileNames.push(path + "/index.vue");
+      }
+      if (!path.endsWith(".js")) {
+        possibleFileNames.push(path + ".js");
+        possibleFileNames.push(path + "/index.js");
+      }
+      if (!path.endsWith(".jsx")) {
+        possibleFileNames.push(path + ".jsx");
+        possibleFileNames.push(path + "/index.jsx");
+      }
+      possibleFileNames.push(path);
     }
 
     return possibleFileNames;
