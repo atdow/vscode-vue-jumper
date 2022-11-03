@@ -2,7 +2,7 @@
  * @Author: atdow
  * @Date: 2022-10-29 19:56:13
  * @LastEditors: null
- * @LastEditTime: 2022-11-04 00:05:03
+ * @LastEditTime: 2022-11-04 00:10:26
  * @Description: file description
  */
 const fs = require("fs");
@@ -135,7 +135,7 @@ const util = {
       /components[\s]?:[\s\S]*?{[\s\S]*?}/g
     );
     // console.log("componentsCombine:", componentsCombine);
-    if (componentsCombine.length > 0) {
+    if (componentsCombine && componentsCombine.length > 0) {
       /**
         匹配到以下结果:
         { 's-component': SComponent, MyComponent }
@@ -148,15 +148,18 @@ const util = {
        */
       const componentObjStrArr = componentsCombine[0].match(/{[\s\S]*?}/);
       let componentObjStr = "";
-      if (componentObjStrArr.length > 0) {
+      if (componentObjStrArr && componentObjStrArr.length > 0) {
         componentObjStr = componentObjStrArr[0];
+      } else {
+        return {};
       }
       // ["s-component: SComponent", "MyComponent"]
       const componentArr = componentObjStr
         .replace(/(\n+)|(\/{2,}.*?(\r|\n))|(\/\*(\n|.)*?\*\/)/g, "") // 去掉注释
         .replace(/[{}'"]/g, "") // 去掉花括号、'、"
         .split(",")
-        .map((item) => item.trim());
+        .map((item) => item.trim())
+        .filter((item) => !!item);
       // console.log("componentArr:", componentArr);
       const registerComponentsObj = {};
       componentArr.forEach((item) => {
@@ -170,6 +173,7 @@ const util = {
       return registerComponentsObj;
       // console.log("componentsObj:", componentsObj);
     }
+    return {};
   },
   documentFindMixins(document) {
     const documentText = document.getText();
