@@ -2,7 +2,7 @@
  * @Author: atdow
  * @Date: 2022-10-29 19:56:13
  * @LastEditors: null
- * @LastEditTime: 2022-11-03 22:11:29
+ * @LastEditTime: 2022-11-03 22:42:58
  * @Description: file description
  */
 const fs = require("fs");
@@ -50,8 +50,8 @@ const util = {
     componentName: string
   ): string {
     let importLine = "";
-    if (documentText.match(/import.+'/)) {
-      const importArr = documentText.match(/[^//]import.+'/g);
+    if (documentText.match(/import.+['"]/)) {
+      const importArr = documentText.match(/[^//]import.+['"]/g);
       importLine =
         importArr.find((item) => item.indexOf(componentName) !== -1) || "";
     }
@@ -61,8 +61,8 @@ const util = {
     const documentText = document.getText();
     const obj = {};
     // console.log("documentText:", documentText);
-    if (documentText.match(/import.+'/)) {
-      const importArr = documentText.match(/[^//]import.+'/g);
+    if (documentText.match(/import.+['"]/)) {
+      const importArr = documentText.match(/[^//]import.+['"]/g);
       importArr.forEach((importLineItem) => {
         let componentName = "";
         const path = this.importLineFindOriginImportPath(importLineItem);
