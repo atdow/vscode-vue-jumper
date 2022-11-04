@@ -2,7 +2,7 @@
  * @Author: atdow
  * @Date: 2022-10-29 19:56:13
  * @LastEditors: null
- * @LastEditTime: 2022-11-04 22:18:47
+ * @LastEditTime: 2022-11-05 00:20:18
  * @Description: file description
  */
 const fs = require('fs')
@@ -25,8 +25,15 @@ const util = {
     // 当前工作区
     let currentWorkspaceFolder = ''
     workspaceFolders.forEach((workspaceFoldersItem) => {
-      if (formatCurrentFile.indexOf(workspaceFoldersItem) === 0) {
-        currentWorkspaceFolder = workspaceFoldersItem
+      // 这里的判断应该是无用的，可能是虚拟机导致的问题
+      if (formatCurrentFile.startsWith('/w:') || formatCurrentFile.startsWith('/W:')) {
+        if (formatCurrentFile.slice(3).indexOf(workspaceFoldersItem.slice(3)) === 0) {
+          currentWorkspaceFolder = workspaceFoldersItem
+        }
+      } else {
+        if (formatCurrentFile.indexOf(workspaceFoldersItem) === 0) {
+          currentWorkspaceFolder = workspaceFoldersItem
+        }
       }
     })
     // 这里多了一层目录，也就是当前文件名
@@ -95,6 +102,7 @@ const util = {
       const originImportPath = documentImportObj[key].originPath
       const pureOriginImportPath = originImportPath.replace(/^[\.]\//, '') // 清除./
       const currentDirPath = this.getCurrentDir(currentFilePath)
+      // console.log('currentDirPath:', currentDirPath)
       // 带../相对路径
       if (pureOriginImportPath.match(/\.\.\//)) {
         const appendPath = pureOriginImportPath.replace(/\.\.\//, '') // 去除../

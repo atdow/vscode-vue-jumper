@@ -2,7 +2,7 @@
  * @Author: atdow
  * @Date: 2017-08-21 14:59:59
  * @LastEditors: null
- * @LastEditTime: 2022-11-04 22:17:01
+ * @LastEditTime: 2022-11-05 00:16:05
  * @Description: file description
  */
 import * as vscode from 'vscode'
@@ -56,6 +56,7 @@ export default class JumperFileDefinitionProvider implements vscode.DefinitionPr
       that.aliasConfigs,
       (document.uri ? document.uri : document).fsPath
     )
+    console.log('importObj:', importObj)
     const registerComponentsObj = util.documentFindRegisterComponentsObj(document.getText()) || {}
     // import 类型
     if (pureLine.startsWith('import')) {
@@ -99,11 +100,25 @@ export default class JumperFileDefinitionProvider implements vscode.DefinitionPr
               return
             }
             const mixinsFilePath = resItem[0]
-            const file = fs.readFileSync(mixinsFilePath.path, { encoding: 'utf-8' })
+            let readFileSyncFormatFilePath = mixinsFilePath.path
+            if (util.isWindows()) {
+              // /c:/code/xxx/src/views/mixins1.js ==> c://code//xxx//src//views//mixins1.js
+              readFileSyncFormatFilePath = readFileSyncFormatFilePath.slice(1).replace(/\//g, '//')
+            }
+            let file = fs.readFileSync(readFileSyncFormatFilePath, { encoding: 'utf-8' })
             if (!file) {
               return
             }
-            const mixinsFileImportObj = util.documentFindAllImport(file, that.aliasConfigs, mixinsFilePath.path)
+            let documentFindAllImportFormatPath = mixinsFilePath.path
+            if (util.isWindows()) {
+              // /c:/code/xxx/src/views/mixins1.js => c:/code/xxx/src/views/mixins1.js 为了让documentFindAllImport方法保持一致
+              documentFindAllImportFormatPath = documentFindAllImportFormatPath.slice(1)
+            }
+            const mixinsFileImportObj = util.documentFindAllImport(
+              file,
+              that.aliasConfigs,
+              documentFindAllImportFormatPath
+            )
             const mixinsFileRegisterComponentsObj = util.documentFindRegisterComponentsObj(file) || {}
             let searchComponentName = util.upperCamelCaseTagName(keyword)
             Object.keys(mixinsFileRegisterComponentsObj).forEach((key) => {
