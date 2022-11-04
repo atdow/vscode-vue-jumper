@@ -2,7 +2,7 @@
  * @Author: atdow
  * @Date: 2017-08-21 14:59:59
  * @LastEditors: null
- * @LastEditTime: 2022-11-05 00:16:05
+ * @LastEditTime: 2022-11-05 00:31:59
  * @Description: file description
  */
 import * as vscode from 'vscode'
@@ -56,7 +56,7 @@ export default class JumperFileDefinitionProvider implements vscode.DefinitionPr
       that.aliasConfigs,
       (document.uri ? document.uri : document).fsPath
     )
-    console.log('importObj:', importObj)
+    // console.log('importObj:', importObj)
     const registerComponentsObj = util.documentFindRegisterComponentsObj(document.getText()) || {}
     // import 类型
     if (pureLine.startsWith('import')) {
@@ -81,6 +81,7 @@ export default class JumperFileDefinitionProvider implements vscode.DefinitionPr
       // 从mixins中找
       if (!lineInfo.path) {
         const mixins = util.documentFindMixins(document.getText()) || []
+        // console.log('mixins:', mixins)
         for (let i = mixins.length - 1; i >= 0; i--) {
           // 从后面往前找，如果找到了就不再找了
           if (lineInfo.path) {

@@ -2,7 +2,7 @@
  * @Author: atdow
  * @Date: 2022-10-29 19:56:13
  * @LastEditors: null
- * @LastEditTime: 2022-11-05 00:20:18
+ * @LastEditTime: 2022-11-05 00:30:57
  * @Description: file description
  */
 const fs = require('fs')
@@ -179,6 +179,7 @@ const util = {
     return {}
   },
   documentFindMixins(documentText = '') {
+    documentText = documentText.replace(/(\n+)|(\/{2,}.*?(\r|\n))|(\/\*(\n|.)*?\*\/)/g, '') // 去掉注释
     // const documentText = document.getText();
     const mixinsCombine = documentText.match(/mixins[\s]?:[\s\S]*?\[[\s\S]*?\]/g)
     // console.log("mixinsCombine:", mixinsCombine);
@@ -188,7 +189,6 @@ const util = {
       if (mixinsStrArr.length > 0) {
         mixinsStr = mixinsStrArr[0]
         const mixins = mixinsStr
-          .replace(/(\n+)|(\/{2,}.*?(\r|\n))|(\/\*(\n|.)*?\*\/)/g, '') // 去掉注释
           .replace(/[\[\]]/g, '') // 去掉[、]
           .split(',')
           .map((item) => item.trim())
