@@ -2,7 +2,7 @@
  * @Author: atdow
  * @Date: 2017-08-21 14:59:59
  * @LastEditors: null
- * @LastEditTime: 2022-11-05 00:31:59
+ * @LastEditTime: 2022-11-05 01:06:11
  * @Description: file description
  */
 import * as vscode from 'vscode'
@@ -164,7 +164,15 @@ export default class JumperFileDefinitionProvider implements vscode.DefinitionPr
           possibleFileNamesAdd(path)
         }
         function possibleFileNamesAdd(originPath) {
+          // 通过常规的方法都无法找到，只能退而其次地模糊去全局文件中找
           if (!path) {
+            const upperCamelCaseTagName = util.upperCamelCaseTagName(selectedText)
+            possibleFileNames.push(upperCamelCaseTagName + '.vue')
+            possibleFileNames.push(upperCamelCaseTagName + '/index.vue')
+            possibleFileNames.push(upperCamelCaseTagName + '/index.js')
+            possibleFileNames.push(selectedText + '.vue')
+            possibleFileNames.push(selectedText + '/index.vue')
+            possibleFileNames.push(selectedText + '/index.js')
             return
           }
           if (!path.endsWith('.vue')) {
