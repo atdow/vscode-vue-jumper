@@ -2,7 +2,7 @@
  * @Author: atdow
  * @Date: 2017-08-21 14:59:59
  * @LastEditors: null
- * @LastEditTime: 2022-11-05 18:24:35
+ * @LastEditTime: 2022-11-05 19:06:15
  * @Description: file description
  */
 import * as vscode from 'vscode'
@@ -31,7 +31,7 @@ export default class JumperFileDefinitionProvider implements vscode.DefinitionPr
     })
   }
 
-  async judeLineType(line: String, keyword: string, document): Promise<ILineInfo> {
+  async judeLineType(line: String, keyword: string, document: vscode.TextDocument): Promise<ILineInfo> {
     const that = this
     const lineInfo: ILineInfo = {
       type: '',
@@ -45,7 +45,8 @@ export default class JumperFileDefinitionProvider implements vscode.DefinitionPr
     const importObj: object = util.documentFindAllImport(
       document.getText(),
       that.aliasConfigs,
-      (document.uri ? document.uri : document).fsPath
+      document.uri.fsPath
+      // (document.uri ? document.uri : document).fsPath
     )
     // console.log('importObj:', importObj)
     const registerComponentsObj: object = util.documentFindRegisterComponentsObj(document.getText()) || {}
@@ -140,9 +141,9 @@ export default class JumperFileDefinitionProvider implements vscode.DefinitionPr
     })
   }
 
-  getComponentName(position: vscode.Position, document): Promise<string[]> {
-    const doc = vscode.window.activeTextEditor.document
-    const selection = doc.getWordRangeAtPosition(position)
+  getComponentName(position: vscode.Position, document: vscode.TextDocument): Promise<string[]> {
+    const doc: vscode.TextDocument = vscode.window.activeTextEditor.document
+    const selection: vscode.Range = doc.getWordRangeAtPosition(position)
     const selectedText: string = doc.getText(selection)
     let lineText: string = doc.lineAt(position).text
     return this.judeLineType(lineText, selectedText, document)
