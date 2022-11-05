@@ -2,18 +2,13 @@
  * @Author: atdow
  * @Date: 2017-08-21 14:59:59
  * @LastEditors: null
- * @LastEditTime: 2022-11-05 01:06:11
+ * @LastEditTime: 2022-11-05 18:24:35
  * @Description: file description
  */
 import * as vscode from 'vscode'
-const pathUtil = require('path')
 const util = require('./util')
 const fs = require('fs')
-
-interface IAliasConfigsItem {
-  alias: string
-  target: string
-}
+import { IAliasConfigsItem, ILineInfo } from './types'
 
 export default class JumperFileDefinitionProvider implements vscode.DefinitionProvider {
   targetFileExtensions: string[] = []
@@ -23,7 +18,7 @@ export default class JumperFileDefinitionProvider implements vscode.DefinitionPr
     this.targetFileExtensions = targetFileExtensions
     aliasConfigs.forEach((aliasConfigsItem) => {
       try {
-        const aliasConfigsItemArr = aliasConfigsItem.split(':')
+        const aliasConfigsItemArr: string[] = aliasConfigsItem.split(':')
         if (aliasConfigsItemArr && aliasConfigsItemArr.length === 2) {
           this.aliasConfigs.push({
             alias: aliasConfigsItemArr[0],
@@ -36,13 +31,9 @@ export default class JumperFileDefinitionProvider implements vscode.DefinitionPr
     })
   }
 
-  async judeLineType(line: String, keyword: string, document) {
+  async judeLineType(line: String, keyword: string, document): Promise<ILineInfo> {
     const that = this
-    const lineInfo: {
-      type: string
-      path: String
-      originPath: string
-    } = {
+    const lineInfo: ILineInfo = {
       type: '',
       path: '',
       originPath: ''
@@ -50,14 +41,14 @@ export default class JumperFileDefinitionProvider implements vscode.DefinitionPr
     if (!line) {
       return lineInfo
     }
-    const pureLine = line.trim()
-    const importObj = util.documentFindAllImport(
+    const pureLine: string = line.trim()
+    const importObj: object = util.documentFindAllImport(
       document.getText(),
       that.aliasConfigs,
       (document.uri ? document.uri : document).fsPath
     )
     // console.log('importObj:', importObj)
-    const registerComponentsObj = util.documentFindRegisterComponentsObj(document.getText()) || {}
+    const registerComponentsObj: object = util.documentFindRegisterComponentsObj(document.getText()) || {}
     // import 类型
     if (pureLine.startsWith('import')) {
       lineInfo.type = 'import'
@@ -66,7 +57,7 @@ export default class JumperFileDefinitionProvider implements vscode.DefinitionPr
     // 标签类型
     if (pureLine.startsWith('<')) {
       lineInfo.type = 'tag'
-      let searchComponentName = util.upperCamelCaseTagName(keyword)
+      let searchComponentName: string = util.upperCamelCaseTagName(keyword)
       // 直接从importObj中查找
       this.componentNameInImportObjUpdateLineInfo(searchComponentName, importObj, lineInfo)
       // 从components中查找(组件重命名情况) components: { RenameMyComponent: MyComponent, 's-my-component2': MyComponent2 }
@@ -80,48 +71,48 @@ export default class JumperFileDefinitionProvider implements vscode.DefinitionPr
       }
       // 从mixins中找
       if (!lineInfo.path) {
-        const mixins = util.documentFindMixins(document.getText()) || []
+        const mixins: string[] = util.documentFindMixins(document.getText()) || []
         // console.log('mixins:', mixins)
         for (let i = mixins.length - 1; i >= 0; i--) {
           // 从后面往前找，如果找到了就不再找了
           if (lineInfo.path) {
             break
           }
-          let mixinsPath = importObj[mixins[i]].path
-          const mixinsPathArr = []
+          let mixinsPath: string = importObj[mixins[i]].path
+          const mixinsPathArr: Thenable<vscode.Uri[]>[] = []
           if (!mixinsPath.endsWith('.js') && !mixinsPath.endsWith('.ts')) {
             mixinsPathArr.push(this.searchFilePath(`${mixinsPath}.js`))
             mixinsPathArr.push(this.searchFilePath(`${mixinsPath}.ts`))
           } else {
             mixinsPathArr.push(this.searchFilePath(`${mixinsPath}`))
           }
-          const mixinsFilePathArr = (await Promise.all(mixinsPathArr)) || []
+          const mixinsFilePathArr: Array<vscode.Uri[]> = (await Promise.all(mixinsPathArr)) || []
           mixinsFilePathArr.forEach((resItem) => {
             if (resItem.length === 0) {
               return
             }
-            const mixinsFilePath = resItem[0]
-            let readFileSyncFormatFilePath = mixinsFilePath.path
+            const mixinsFilePath: vscode.Uri = resItem[0]
+            let readFileSyncFormatFilePath: string = mixinsFilePath.path
             if (util.isWindows()) {
               // /c:/code/xxx/src/views/mixins1.js ==> c://code//xxx//src//views//mixins1.js
               readFileSyncFormatFilePath = readFileSyncFormatFilePath.slice(1).replace(/\//g, '//')
             }
-            let file = fs.readFileSync(readFileSyncFormatFilePath, { encoding: 'utf-8' })
+            let file: string = fs.readFileSync(readFileSyncFormatFilePath, { encoding: 'utf-8' })
             if (!file) {
               return
             }
-            let documentFindAllImportFormatPath = mixinsFilePath.path
+            let documentFindAllImportFormatPath: string = mixinsFilePath.path
             if (util.isWindows()) {
               // /c:/code/xxx/src/views/mixins1.js => c:/code/xxx/src/views/mixins1.js 为了让documentFindAllImport方法保持一致
               documentFindAllImportFormatPath = documentFindAllImportFormatPath.slice(1)
             }
-            const mixinsFileImportObj = util.documentFindAllImport(
+            const mixinsFileImportObj: object = util.documentFindAllImport(
               file,
               that.aliasConfigs,
               documentFindAllImportFormatPath
             )
-            const mixinsFileRegisterComponentsObj = util.documentFindRegisterComponentsObj(file) || {}
-            let searchComponentName = util.upperCamelCaseTagName(keyword)
+            const mixinsFileRegisterComponentsObj: object = util.documentFindRegisterComponentsObj(file) || {}
+            let searchComponentName: string = util.upperCamelCaseTagName(keyword)
             Object.keys(mixinsFileRegisterComponentsObj).forEach((key) => {
               if (key === searchComponentName || key === keyword) {
                 searchComponentName = mixinsFileRegisterComponentsObj[key]
@@ -140,7 +131,7 @@ export default class JumperFileDefinitionProvider implements vscode.DefinitionPr
    * @param importObj
    * @param lineInfo
    */
-  componentNameInImportObjUpdateLineInfo(componentName, importObj, lineInfo) {
+  componentNameInImportObjUpdateLineInfo(componentName: string, importObj: object, lineInfo: ILineInfo) {
     Object.keys(importObj).forEach((key) => {
       if (key === componentName) {
         lineInfo.originPath = importObj[componentName].originPath
@@ -149,17 +140,15 @@ export default class JumperFileDefinitionProvider implements vscode.DefinitionPr
     })
   }
 
-  getComponentName(position: vscode.Position, document) {
+  getComponentName(position: vscode.Position, document): Promise<string[]> {
     const doc = vscode.window.activeTextEditor.document
     const selection = doc.getWordRangeAtPosition(position)
-    const selectedText = doc.getText(selection)
-    let lineText = doc.lineAt(position).text
-    const lineInfo = this.judeLineType(lineText, selectedText, document)
-    // console.log("lineInfo:", lineInfo);
-    return lineInfo
-      .then((res) => {
+    const selectedText: string = doc.getText(selection)
+    let lineText: string = doc.lineAt(position).text
+    return this.judeLineType(lineText, selectedText, document)
+      .then((res: ILineInfo) => {
         const { type, path, originPath } = res
-        let possibleFileNames = []
+        let possibleFileNames: string[] = []
         if (type === 'import' || type === 'tag') {
           possibleFileNamesAdd(path)
         }
@@ -216,7 +205,7 @@ export default class JumperFileDefinitionProvider implements vscode.DefinitionPr
           filePaths = [].concat.apply([], paths)
 
           if (filePaths.length) {
-            let allPaths = []
+            let allPaths: vscode.Location[] = []
             filePaths.forEach((filePath) => {
               allPaths.push(new vscode.Location(vscode.Uri.file(`${filePath.path}`), new vscode.Position(0, 1)))
             })

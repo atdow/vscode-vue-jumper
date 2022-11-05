@@ -2,28 +2,29 @@
  * @Author: atdow
  * @Date: 2022-10-29 19:56:13
  * @LastEditors: null
- * @LastEditTime: 2022-11-05 00:30:57
+ * @LastEditTime: 2022-11-05 17:59:05
  * @Description: file description
  */
 const fs = require('fs')
 const os = require('os')
 const path = require('path')
 const vscode = require('vscode')
+import { IAliasConfigsItem } from './types'
 
 const util = {
-  isWindows: function () {
+  isWindows: function (): boolean {
     // console.log("fs:", fs);
-    const isWindows = /\\/.test(vscode.workspace.rootPath)
+    const isWindows: boolean = /\\/.test(vscode.workspace.rootPath)
     return isWindows
   },
-  getCurrentDir: function (currentFile) {
-    let workspaceFolders = vscode.workspace.workspaceFolders.map((item) => item.uri.path)
-    let formatCurrentFile = currentFile
+  getCurrentDir: function (currentFile: string): string {
+    let workspaceFolders: string[] = vscode.workspace.workspaceFolders.map((item) => item.uri.path)
+    let formatCurrentFile: string = currentFile
     if (this.isWindows()) {
       formatCurrentFile = '/' + currentFile.replace(/\\/g, '/')
     }
     // 当前工作区
-    let currentWorkspaceFolder = ''
+    let currentWorkspaceFolder: string = ''
     workspaceFolders.forEach((workspaceFoldersItem) => {
       // 这里的判断应该是无用的，可能是虚拟机导致的问题
       if (formatCurrentFile.startsWith('/w:') || formatCurrentFile.startsWith('/W:')) {
@@ -37,8 +38,8 @@ const util = {
       }
     })
     // 这里多了一层目录，也就是当前文件名
-    const currentFilePath = formatCurrentFile.slice(currentWorkspaceFolder.length + 1)
-    const currentFilePathArr = currentFilePath.split('/')
+    const currentFilePath: string = formatCurrentFile.slice(currentWorkspaceFolder.length + 1)
+    const currentFilePathArr: string[] = currentFilePath.split('/')
     return currentFilePathArr.slice(0, currentFilePathArr.length - 1).join('/') // 去除当前文件名并返回
   },
   /**
@@ -48,28 +49,27 @@ const util = {
    * @returns 引入文本行: import MyComponent from "../../MyComponent"
    */
   documentTextFindComponentImportLine(documentText: string, componentName: string): string {
-    let importLine = ''
+    let importLine: string = ''
     if (documentText.match(/import.+['"]/)) {
-      const importArr = documentText.match(/[^//]import.+['"]/g)
+      const importArr: string[] = documentText.match(/[^//]import.+['"]/g)
       importLine = importArr.find((item) => item.indexOf(componentName) !== -1) || ''
     }
     return importLine
   },
   documentFindAllImport(
     // document,
-    documentText = '',
-    aliasConfigs,
-    currentFilePath = ''
+    documentText: string = '',
+    aliasConfigs: IAliasConfigsItem[] = [],
+    currentFilePath: string = ''
   ): object {
-    // const documentText = document.getText();
-    const obj = {}
+    const obj: object = {}
     // console.log("documentText:", documentText);
     if (documentText.match(/import.+['"]/)) {
-      const importArr = documentText.match(/[^//]import.+['"]/g)
+      const importArr: string[] = documentText.match(/[^//]import.+['"]/g)
       importArr.forEach((importLineItem) => {
-        let componentName = ''
-        const path = this.importLineFindOriginImportPath(importLineItem)
-        const tagSliceArr = importLineItem.match(/import.*?from/) || [] // ['import componentName from']
+        let componentName: string = ''
+        const path: string = this.importLineFindOriginImportPath(importLineItem)
+        const tagSliceArr: string[] = importLineItem.match(/import.*?from/) || [] // ['import componentName from']
         if (tagSliceArr.length > 0) {
           // ['import', 'componentName', 'from']
           componentName = (tagSliceArr[0].match(/[a-zA-Z0-9_]+/g) || []).find(
@@ -82,34 +82,28 @@ const util = {
         // console.log("componentName:", componentName);
       })
     }
-    this.documentImportObjAddPath(
-      // document,
-      obj,
-      aliasConfigs,
-      currentFilePath
-    )
+    this.documentImportObjAddPath(obj, aliasConfigs, currentFilePath)
     // console.log("obj:", obj);
     return obj
   },
   documentImportObjAddPath(
-    // document,
-    documentImportObj = {},
-    aliasConfigs = [],
-    currentFilePath
+    documentImportObj: object = {},
+    aliasConfigs: IAliasConfigsItem[] = [],
+    currentFilePath: string = ''
   ) {
     Object.keys(documentImportObj).forEach((key) => {
-      let absolutePath = ''
-      const originImportPath = documentImportObj[key].originPath
-      const pureOriginImportPath = originImportPath.replace(/^[\.]\//, '') // 清除./
-      const currentDirPath = this.getCurrentDir(currentFilePath)
+      let absolutePath: string = ''
+      const originImportPath: string = documentImportObj[key].originPath
+      const pureOriginImportPath: string = originImportPath.replace(/^[\.]\//, '') // 清除./
+      const currentDirPath: string = this.getCurrentDir(currentFilePath)
       // console.log('currentDirPath:', currentDirPath)
       // 带../相对路径
       if (pureOriginImportPath.match(/\.\.\//)) {
-        const appendPath = pureOriginImportPath.replace(/\.\.\//, '') // 去除../
-        const pathMeshArr = pureOriginImportPath.match(/\.\.\//)
-        const currentDirPathArr = currentDirPath.split('/')
+        const appendPath: string = pureOriginImportPath.replace(/\.\.\//, '') // 去除../
+        const pathMeshArr: string[] = pureOriginImportPath.match(/\.\.\//)
+        const currentDirPathArr: string[] = currentDirPath.split('/')
         // 相对目录路径
-        const prefixPath = currentDirPathArr.slice(0, currentDirPathArr.length - pathMeshArr.length).join('/')
+        const prefixPath: string = currentDirPathArr.slice(0, currentDirPathArr.length - pathMeshArr.length).join('/')
         absolutePath = `${prefixPath}/${appendPath}`
       } else {
         // 当前目录下
@@ -124,7 +118,7 @@ const util = {
       documentImportObj[key].path = absolutePath
     })
   },
-  documentFindRegisterComponentsObj(documentText = '') {
+  documentFindRegisterComponentsObj(documentText: string = ''): object {
     // const documentText = document.getText();
     /**
       匹配到以下结果:
@@ -136,7 +130,7 @@ const util = {
         MyComponent 
       }
      */
-    const componentsCombine = documentText.match(/components[\s]?:[\s\S]*?{[\s\S]*?}/g)
+    const componentsCombine: string[] = documentText.match(/components[\s]?:[\s\S]*?{[\s\S]*?}/g) || []
     // console.log("componentsCombine:", componentsCombine);
     if (componentsCombine && componentsCombine.length > 0) {
       /**
@@ -149,24 +143,24 @@ const util = {
           MyComponent 
         }
        */
-      const componentObjStrArr = componentsCombine[0].match(/{[\s\S]*?}/)
-      let componentObjStr = ''
+      const componentObjStrArr: string[] = componentsCombine[0].match(/{[\s\S]*?}/) || []
+      let componentObjStr: string = ''
       if (componentObjStrArr && componentObjStrArr.length > 0) {
         componentObjStr = componentObjStrArr[0]
       } else {
         return {}
       }
       // ["s-component: SComponent", "MyComponent"]
-      const componentArr = componentObjStr
+      const componentArr: string[] = componentObjStr
         .replace(/(\n+)|(\/{2,}.*?(\r|\n))|(\/\*(\n|.)*?\*\/)/g, '') // 去掉注释
         .replace(/[{}'"]/g, '') // 去掉花括号、'、"
         .split(',')
         .map((item) => item.trim())
         .filter((item) => !!item)
       // console.log("componentArr:", componentArr);
-      const registerComponentsObj = {}
+      const registerComponentsObj: object = {}
       componentArr.forEach((item) => {
-        const splitArr = item.split(':')
+        const splitArr: string[] = item.split(':')
         if (splitArr.length === 2) {
           registerComponentsObj[splitArr[0].trim()] = splitArr[1].trim()
         } else {
@@ -178,17 +172,17 @@ const util = {
     }
     return {}
   },
-  documentFindMixins(documentText = '') {
+  documentFindMixins(documentText: string = ''): string[] {
     documentText = documentText.replace(/(\n+)|(\/{2,}.*?(\r|\n))|(\/\*(\n|.)*?\*\/)/g, '') // 去掉注释
     // const documentText = document.getText();
-    const mixinsCombine = documentText.match(/mixins[\s]?:[\s\S]*?\[[\s\S]*?\]/g)
+    const mixinsCombine: string[] = documentText.match(/mixins[\s]?:[\s\S]*?\[[\s\S]*?\]/g) || []
     // console.log("mixinsCombine:", mixinsCombine);
     if (mixinsCombine && mixinsCombine.length > 0) {
-      const mixinsStrArr = mixinsCombine[0].match(/\[[\s\S]*?\]/)
-      let mixinsStr = ''
+      const mixinsStrArr: string[] = mixinsCombine[0].match(/\[[\s\S]*?\]/) || []
+      let mixinsStr: string = ''
       if (mixinsStrArr.length > 0) {
         mixinsStr = mixinsStrArr[0]
-        const mixins = mixinsStr
+        const mixins: string[] = mixinsStr
           .replace(/[\[\]]/g, '') // 去掉[、]
           .split(',')
           .map((item) => item.trim())
@@ -206,10 +200,10 @@ const util = {
    * @param tagName
    */
   upperCamelCaseTagName: function (tagName: string): string {
-    let formatTagName = tagName
+    let formatTagName: string = tagName
     if (formatTagName.indexOf('-') !== -1) {
-      let myText = ''
-      const textCharArr = tagName.split('')
+      let myText: string = ''
+      const textCharArr: string[] = tagName.split('')
       for (let i = 0; i < textCharArr.length; i++) {
         if (i === 0) {
           myText += textCharArr[i].toUpperCase()
@@ -229,17 +223,17 @@ const util = {
    * @returns ../../MyComponent
    */
   importLineFindOriginImportPath: function (importLine: string): string {
-    let originImportPath = ''
+    let originImportPath: string = ''
     // import MyComponent from "../../MyComponent"
     if (importLine.match(/\"([^\"]*)\"/)) {
-      const pathArr = importLine.match(/\"([^\"]*)\"/)
+      const pathArr: string[] = importLine.match(/\"([^\"]*)\"/) || []
       if (pathArr && pathArr.length > 0) {
         originImportPath = pathArr.find((item) => !item.match(/\"/))
       }
     }
     // import MyComponent from '../../MyComponent'
     if (importLine.match(/'([^\']*)'/)) {
-      const pathArr = importLine.match(/'([^\']*)'/)
+      const pathArr: string[] = importLine.match(/'([^\']*)'/) || []
       if (pathArr && pathArr.length > 0) {
         originImportPath = pathArr.find((item) => !item.match(/'/))
       }
@@ -249,13 +243,13 @@ const util = {
   /**
    * 弹出错误信息
    */
-  showError: function (info) {
+  showError: function (info: string) {
     vscode.window.showErrorMessage(info)
   },
   /**
    * 弹出提示信息
    */
-  showInfo: function (info) {
+  showInfo: function (info: string) {
     vscode.window.showInformationMessage(info)
   }
 }
