@@ -2,7 +2,7 @@
  * @Author: atdow
  * @Date: 2017-08-21 14:59:59
  * @LastEditors: null
- * @LastEditTime: 2022-11-05 19:06:15
+ * @LastEditTime: 2022-11-05 19:34:32
  * @Description: file description
  */
 import * as vscode from 'vscode'
@@ -196,10 +196,10 @@ export default class JumperFileDefinitionProvider implements vscode.DefinitionPr
     position: vscode.Position,
     token: vscode.CancellationToken
   ): Promise<vscode.Location | vscode.Location[]> {
-    let filePaths = []
+    let filePaths: vscode.Uri[] = []
     return this.getComponentName(position, document).then((componentNames) => {
       // console.log("componentNames:", componentNames);
-      const searchPathActions = componentNames.map(this.searchFilePath)
+      const searchPathActions: Thenable<vscode.Uri[]>[] = componentNames.map(this.searchFilePath)
       const searchPromises = Promise.all(searchPathActions) // pass array of promises
       return searchPromises.then(
         (paths) => {
