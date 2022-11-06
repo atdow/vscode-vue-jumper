@@ -2,7 +2,7 @@
  * @Author: atdow
  * @Date: 2022-10-29 19:56:13
  * @LastEditors: null
- * @LastEditTime: 2022-11-05 17:59:05
+ * @LastEditTime: 2022-11-06 17:54:44
  * @Description: file description
  */
 const fs = require('fs')
@@ -215,6 +215,32 @@ const util = {
       }
       formatTagName = myText
     }
+    return formatTagName
+  },
+  /**
+   * 将tagName转成kebabCase
+   * 主要转换: MyComponents --> my-components
+   * @param tagName
+   * @returns
+   */
+  kebabCaseTagName: function (tagName: string): string {
+    let formatTagName: string = tagName
+    if (formatTagName.indexOf('-') !== -1) {
+      return formatTagName
+    }
+    let myText = ''
+    for (let i = 0; i < tagName.length; i++) {
+      const char = tagName[i]
+      const charCode = char.charCodeAt(0)
+      // 大小字母
+      if (charCode >= 65 && charCode <= 90) {
+        myText += '-' + char.toLocaleLowerCase()
+      } else if (charCode >= 97 && charCode <= 122) {
+        // 小写字母
+        myText += char
+      }
+    }
+    formatTagName = myText.slice(1)
     return formatTagName
   },
   /**
