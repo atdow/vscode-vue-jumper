@@ -63,6 +63,16 @@
             "type": "string"
           },
           "description": "import alias config"
+        },
+        "vue-jumper.globalComponentsPrefixConfigs": {
+          "type": "array",
+          "default": [
+            "s"
+          ],
+          "items": {
+            "type": "string"
+          },
+          "description": "global components prefix config"
         }
       }
     }

@@ -2,7 +2,7 @@
  * @Author: atdow
  * @Date: 2017-08-21 14:59:59
  * @LastEditors: null
- * @LastEditTime: 2022-11-05 18:04:44
+ * @LastEditTime: 2022-11-06 17:22:57
  * @Description: file description
  */
 'use strict'
@@ -18,11 +18,12 @@ export function activate(context: vscode.ExtensionContext) {
   const supportedLanguages = configParams.get('supportedLanguages') as Array<string>
   const targetFileExtensions = configParams.get('targetFileExtensions') as Array<string>
   const aliasConfigs = configParams.get('aliasConfigs') as Array<string>
+  const globalComponentsPrefixConfigs = configParams.get('globalComponentsPrefixConfigs') as Array<string>
 
   context.subscriptions.push(
     vscode.languages.registerDefinitionProvider(
       supportedLanguages,
-      new JumperFileDefinitionProvider(targetFileExtensions, aliasConfigs)
+      new JumperFileDefinitionProvider(targetFileExtensions, aliasConfigs, globalComponentsPrefixConfigs)
     )
   )
 

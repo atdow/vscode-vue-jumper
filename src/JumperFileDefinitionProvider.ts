@@ -2,7 +2,7 @@
  * @Author: atdow
  * @Date: 2017-08-21 14:59:59
  * @LastEditors: null
- * @LastEditTime: 2022-11-05 19:34:32
+ * @LastEditTime: 2022-11-06 18:10:58
  * @Description: file description
  */
 import * as vscode from 'vscode'
@@ -13,8 +13,13 @@ import { IAliasConfigsItem, ILineInfo } from './types'
 export default class JumperFileDefinitionProvider implements vscode.DefinitionProvider {
   targetFileExtensions: string[] = []
   aliasConfigs: IAliasConfigsItem[] = []
+  globalComponentsPrefixConfigs: string[] = []
 
-  constructor(targetFileExtensions: string[] = [], aliasConfigs: string[] = []) {
+  constructor(
+    targetFileExtensions: string[] = [],
+    aliasConfigs: string[] = [],
+    globalComponentsPrefixConfigs: string[] = []
+  ) {
     this.targetFileExtensions = targetFileExtensions
     aliasConfigs.forEach((aliasConfigsItem) => {
       try {
@@ -29,6 +34,7 @@ export default class JumperFileDefinitionProvider implements vscode.DefinitionPr
         // console.log("aliasConfigs:", aliasConfigs);
       }
     })
+    this.globalComponentsPrefixConfigs = globalComponentsPrefixConfigs
   }
 
   async judeLineType(line: String, keyword: string, document: vscode.TextDocument): Promise<ILineInfo> {
@@ -142,6 +148,7 @@ export default class JumperFileDefinitionProvider implements vscode.DefinitionPr
   }
 
   getComponentName(position: vscode.Position, document: vscode.TextDocument): Promise<string[]> {
+    const that = this
     const doc: vscode.TextDocument = vscode.window.activeTextEditor.document
     const selection: vscode.Range = doc.getWordRangeAtPosition(position)
     const selectedText: string = doc.getText(selection)
@@ -150,35 +157,59 @@ export default class JumperFileDefinitionProvider implements vscode.DefinitionPr
       .then((res: ILineInfo) => {
         const { type, path, originPath } = res
         let possibleFileNames: string[] = []
-        if (type === 'import' || type === 'tag') {
-          possibleFileNamesAdd(path)
+        if (type !== 'import' && type !== 'tag') {
+          return []
         }
-        function possibleFileNamesAdd(originPath) {
-          // 通过常规的方法都无法找到，只能退而其次地模糊去全局文件中找
-          if (!path) {
-            const upperCamelCaseTagName = util.upperCamelCaseTagName(selectedText)
-            possibleFileNames.push(upperCamelCaseTagName + '.vue')
-            possibleFileNames.push(upperCamelCaseTagName + '/index.vue')
-            possibleFileNames.push(upperCamelCaseTagName + '/index.js')
-            possibleFileNames.push(selectedText + '.vue')
-            possibleFileNames.push(selectedText + '/index.vue')
-            possibleFileNames.push(selectedText + '/index.js')
-            return
-          }
-          if (!path.endsWith('.vue')) {
-            possibleFileNames.push(path + '.vue')
-            possibleFileNames.push(path + '/index.vue')
-          }
-          if (!path.endsWith('.js')) {
-            possibleFileNames.push(path + '.js')
-            possibleFileNames.push(path + '/index.js')
-          }
-          if (!path.endsWith('.jsx')) {
-            possibleFileNames.push(path + '.jsx')
-            possibleFileNames.push(path + '/index.jsx')
-          }
-          possibleFileNames.push(path)
+        // console.log('res:', res)
+        // console.log('globalComponentsPrefixConfigs:', that.globalComponentsPrefixConfigs)
+        // 通过常规的方法都无法找到，只能退而其次地模糊去全局文件中找
+        if (!path) {
+          // 先做直接查找
+          const upperCamelCaseText = util.upperCamelCaseTagName(selectedText)
+          const kebabCaseText = util.kebabCaseTagName(selectedText)
+          possibleFileNames.push(upperCamelCaseText + '.vue')
+          possibleFileNames.push(upperCamelCaseText + '/index.vue')
+          possibleFileNames.push(upperCamelCaseText + '/index.js')
+          possibleFileNames.push(kebabCaseText + '.vue')
+          possibleFileNames.push(kebabCaseText + '/index.vue')
+          possibleFileNames.push(kebabCaseText + '/index.js')
+          // 有全局组件注册带特殊前缀的情况
+          that.globalComponentsPrefixConfigs.forEach((globalComponentsPrefix) => {
+            if (!selectedText.startsWith(globalComponentsPrefix)) {
+              return
+            }
+            let formatSelectedText = selectedText
+            // 去掉前缀
+            if (selectedText.indexOf('-') !== -1) {
+              formatSelectedText = selectedText.split('-').slice(1).join('-')
+            } else {
+              formatSelectedText = selectedText.slice(globalComponentsPrefix.length)
+            }
+            const upperCamelCaseText = util.upperCamelCaseTagName(formatSelectedText)
+            const kebabCaseText = util.kebabCaseTagName(formatSelectedText)
+            possibleFileNames.push(upperCamelCaseText + '.vue')
+            possibleFileNames.push(upperCamelCaseText + '/index.vue')
+            possibleFileNames.push(upperCamelCaseText + '/index.js')
+            possibleFileNames.push(kebabCaseText + '.vue')
+            possibleFileNames.push(kebabCaseText + '/index.vue')
+            possibleFileNames.push(kebabCaseText + '/index.js')
+          })
+          return possibleFileNames
         }
+        // TODO 下面这里可能会和vscode自带的查找逻辑有重复，可以做优化
+        if (!path.endsWith('.vue')) {
+          possibleFileNames.push(path + '.vue')
+          possibleFileNames.push(path + '/index.vue')
+        }
+        if (!path.endsWith('.js')) {
+          possibleFileNames.push(path + '.js')
+          possibleFileNames.push(path + '/index.js')
+        }
+        if (!path.endsWith('.jsx')) {
+          possibleFileNames.push(path + '.jsx')
+          possibleFileNames.push(path + '/index.jsx')
+        }
+        possibleFileNames.push(path)
 
         return possibleFileNames
       })
