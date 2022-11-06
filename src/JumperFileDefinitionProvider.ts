@@ -2,7 +2,7 @@
  * @Author: atdow
  * @Date: 2017-08-21 14:59:59
  * @LastEditors: null
- * @LastEditTime: 2022-11-06 18:10:58
+ * @LastEditTime: 2022-11-06 18:18:21
  * @Description: file description
  */
 import * as vscode from 'vscode'
@@ -11,16 +11,10 @@ const fs = require('fs')
 import { IAliasConfigsItem, ILineInfo } from './types'
 
 export default class JumperFileDefinitionProvider implements vscode.DefinitionProvider {
-  targetFileExtensions: string[] = []
   aliasConfigs: IAliasConfigsItem[] = []
   globalComponentsPrefixConfigs: string[] = []
 
-  constructor(
-    targetFileExtensions: string[] = [],
-    aliasConfigs: string[] = [],
-    globalComponentsPrefixConfigs: string[] = []
-  ) {
-    this.targetFileExtensions = targetFileExtensions
+  constructor(aliasConfigs: string[] = [], globalComponentsPrefixConfigs: string[] = []) {
     aliasConfigs.forEach((aliasConfigsItem) => {
       try {
         const aliasConfigsItemArr: string[] = aliasConfigsItem.split(':')

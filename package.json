@@ -34,26 +34,6 @@
     "configuration": {
       "title": "Vue Jumper extension configuration",
       "properties": {
-        "vue-jumper.supportedLanguages": {
-          "type": "array",
-          "default": [
-            "vue"
-          ],
-          "items": {
-            "type": "string"
-          },
-          "description": "A list of vscode language names where the extension should be used."
-        },
-        "vue-jumper.targetFileExtensions": {
-          "type": "array",
-          "default": [
-            ".vue"
-          ],
-          "items": {
-            "type": "string"
-          },
-          "description": "A list of extensions that should be tried for finding jumped files. These are tried in order as further extensions of the potential file name and also as alternative file endings instead of the existing file extension (if available)."
-        },
         "vue-jumper.aliasConfigs": {
           "type": "array",
           "default": [
