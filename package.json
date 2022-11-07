@@ -2,7 +2,7 @@
   "name": "vue-jumper",
   "displayName": "Vue Jumper",
   "description": "Allows goto definition for Vue single-file components.",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "publisher": "atdow",
   "icon": "images/jump-icon.png",
   "license": "MIT",
