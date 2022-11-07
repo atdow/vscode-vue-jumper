@@ -2,7 +2,7 @@
  * @Author: atdow
  * @Date: 2022-10-29 19:56:13
  * @LastEditors: null
- * @LastEditTime: 2022-11-06 17:54:44
+ * @LastEditTime: 2022-11-07 21:52:17
  * @Description: file description
  */
 const fs = require('fs')
@@ -23,6 +23,9 @@ const util = {
     if (this.isWindows()) {
       formatCurrentFile = '/' + currentFile.replace(/\\/g, '/')
     }
+    // 防止文件根目录和workspaceFolders根目录有大小写差异（主要是windows）
+    const upperCaseFilePathRootFolder: string = this.upperCaseFilePathRootFolder(formatCurrentFile)
+    const lowerCaseFilePathRootFolder: string = this.lowerCaseFilePathRootFolder(formatCurrentFile)
     // 当前工作区
     let currentWorkspaceFolder: string = ''
     workspaceFolders.forEach((workspaceFoldersItem) => {
@@ -32,7 +35,10 @@ const util = {
           currentWorkspaceFolder = workspaceFoldersItem
         }
       } else {
-        if (formatCurrentFile.indexOf(workspaceFoldersItem) === 0) {
+        if (
+          upperCaseFilePathRootFolder.indexOf(workspaceFoldersItem) === 0 ||
+          lowerCaseFilePathRootFolder.indexOf(workspaceFoldersItem) === 0
+        ) {
           currentWorkspaceFolder = workspaceFoldersItem
         }
       }
@@ -41,6 +47,44 @@ const util = {
     const currentFilePath: string = formatCurrentFile.slice(currentWorkspaceFolder.length + 1)
     const currentFilePathArr: string[] = currentFilePath.split('/')
     return currentFilePathArr.slice(0, currentFilePathArr.length - 1).join('/') // 去除当前文件名并返回
+  },
+  /**
+   * 将路径根目录转大写
+   * @param filePath
+   * @returns
+   */
+  upperCaseFilePathRootFolder(filePath: string = ''): string {
+    const filePathCharArr = filePath.split('')
+    if (!this.charIsUpperCase(filePathCharArr[1])) {
+      filePathCharArr[1] = filePathCharArr[1].toLocaleUpperCase()
+    }
+    return filePathCharArr.join('')
+  },
+  /**
+   * 将路径根目录转小写
+   * @param filePath
+   * @returns
+   */
+  lowerCaseFilePathRootFolder(filePath: string = ''): string {
+    const filePathCharArr = filePath.split('')
+    if (this.charIsUpperCase(filePathCharArr[1])) {
+      filePathCharArr[1] = filePathCharArr[1].toLocaleLowerCase()
+    }
+    return filePathCharArr.join('')
+  },
+  /**
+   * 判断字符是不是大写
+   * @param char
+   * @returns
+   */
+  charIsUpperCase(char: string = ''): boolean {
+    const charCode = char.charCodeAt(0)
+    // 大写字母
+    if (charCode >= 65 && charCode <= 90) {
+      return true
+    } else {
+      return false
+    }
   },
   /**
    * 从文档文本中查找组件引入代码行
