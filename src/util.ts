@@ -2,7 +2,7 @@
  * @Author: atdow
  * @Date: 2022-10-29 19:56:13
  * @LastEditors: null
- * @LastEditTime: 2022-11-07 21:52:17
+ * @LastEditTime: 2023-02-12 13:22:01
  * @Description: file description
  */
 const fs = require('fs')
@@ -109,7 +109,7 @@ const util = {
     const obj: object = {}
     // console.log("documentText:", documentText);
     if (documentText.match(/import.+['"]/)) {
-      const importArr: string[] = documentText.match(/[^//]import.+['"]/g)
+      const importArr: string[] = documentText.match(/(?<!\/\/\s.*|<!--\s.*)import.+['"]/g)
       importArr.forEach((importLineItem) => {
         let componentName: string = ''
         const path: string = this.importLineFindOriginImportPath(importLineItem)
