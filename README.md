@@ -2,7 +2,7 @@
  * @Author: atdow
  * @Date: 2022-11-01 21:07:59
  * @LastEditors: null
- * @LastEditTime: 2022-11-07 21:55:29
+ * @LastEditTime: 2023-02-12 13:27:53
  * @Description: file description
 -->
 
@@ -138,6 +138,7 @@ export default MyComponent;
 
 ## 版本
 
+* 2.3.0 修复匹配错误
 * 2.2.0 修复windows兼容问题
 * 2.1.0 增加全局注册带特殊前缀组件跳转支持
 * 2.0.0 增加mixins引入组件注册跳转支持
