@@ -2,7 +2,7 @@
  * @Author: atdow
  * @Date: 2017-08-21 14:59:59
  * @LastEditors: null
- * @LastEditTime: 2022-11-06 18:18:21
+ * @LastEditTime: 2023-03-07 22:29:26
  * @Description: file description
  */
 import * as vscode from 'vscode'
@@ -134,9 +134,10 @@ export default class JumperFileDefinitionProvider implements vscode.DefinitionPr
    */
   componentNameInImportObjUpdateLineInfo(componentName: string, importObj: object, lineInfo: ILineInfo) {
     Object.keys(importObj).forEach((key) => {
-      if (key === componentName) {
-        lineInfo.originPath = importObj[componentName].originPath
-        lineInfo.path = importObj[componentName].path
+      // 忽略大小写，避免import myComponent from './components/myComponent'的情况
+      if (key.toUpperCase() === componentName.toUpperCase()) {
+        lineInfo.originPath = importObj[key].originPath
+        lineInfo.path = importObj[key].path
       }
     })
   }
