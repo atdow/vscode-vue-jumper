@@ -2,7 +2,7 @@
  * @Author: atdow
  * @Date: 2017-08-21 14:59:59
  * @LastEditors: null
- * @LastEditTime: 2023-03-07 22:29:26
+ * @LastEditTime: 2023-11-14 20:47:46
  * @Description: file description
  */
 import * as vscode from 'vscode'
@@ -13,6 +13,13 @@ import { IAliasConfigsItem, ILineInfo } from './types'
 export default class JumperFileDefinitionProvider implements vscode.DefinitionProvider {
   aliasConfigs: IAliasConfigsItem[] = []
   globalComponentsPrefixConfigs: string[] = []
+  possibleFileNamesMap: { [key: string]: string[] } = {
+    vue: ['.vue', '/index.vue'],
+    js: ['.js', '/index.js'],
+    jsx: ['.jsx', '/index.jsx'],
+    ts: ['.ts', '/index.ts'],
+    tsx: ['.tsx', '/index.tsx']
+  }
 
   constructor(aliasConfigs: string[] = [], globalComponentsPrefixConfigs: string[] = []) {
     aliasConfigs.forEach((aliasConfigsItem) => {
@@ -142,6 +149,14 @@ export default class JumperFileDefinitionProvider implements vscode.DefinitionPr
     })
   }
 
+  arrAddPossibleFileNames(arr: string[], possibleFileName: string) {
+    Object.keys(this.possibleFileNamesMap).forEach((key) => {
+      this.possibleFileNamesMap[key].forEach((item) => {
+        arr.push(possibleFileName + item)
+      })
+    })
+  }
+
   getComponentName(position: vscode.Position, document: vscode.TextDocument): Promise<string[]> {
     const that = this
     const doc: vscode.TextDocument = vscode.window.activeTextEditor.document
@@ -162,12 +177,8 @@ export default class JumperFileDefinitionProvider implements vscode.DefinitionPr
           // 先做直接查找
           const upperCamelCaseText = util.upperCamelCaseTagName(selectedText)
           const kebabCaseText = util.kebabCaseTagName(selectedText)
-          possibleFileNames.push(upperCamelCaseText + '.vue')
-          possibleFileNames.push(upperCamelCaseText + '/index.vue')
-          possibleFileNames.push(upperCamelCaseText + '/index.js')
-          possibleFileNames.push(kebabCaseText + '.vue')
-          possibleFileNames.push(kebabCaseText + '/index.vue')
-          possibleFileNames.push(kebabCaseText + '/index.js')
+          this.arrAddPossibleFileNames(possibleFileNames, upperCamelCaseText)
+          this.arrAddPossibleFileNames(kebabCaseText, upperCamelCaseText)
           // 有全局组件注册带特殊前缀的情况
           that.globalComponentsPrefixConfigs.forEach((globalComponentsPrefix) => {
             if (!selectedText.startsWith(globalComponentsPrefix)) {
@@ -182,30 +193,20 @@ export default class JumperFileDefinitionProvider implements vscode.DefinitionPr
             }
             const upperCamelCaseText = util.upperCamelCaseTagName(formatSelectedText)
             const kebabCaseText = util.kebabCaseTagName(formatSelectedText)
-            possibleFileNames.push(upperCamelCaseText + '.vue')
-            possibleFileNames.push(upperCamelCaseText + '/index.vue')
-            possibleFileNames.push(upperCamelCaseText + '/index.js')
-            possibleFileNames.push(kebabCaseText + '.vue')
-            possibleFileNames.push(kebabCaseText + '/index.vue')
-            possibleFileNames.push(kebabCaseText + '/index.js')
+            this.arrAddPossibleFileNames(possibleFileNames, upperCamelCaseText)
+            this.arrAddPossibleFileNames(kebabCaseText, upperCamelCaseText)
           })
           return possibleFileNames
         }
         // TODO 下面这里可能会和vscode自带的查找逻辑有重复，可以做优化
-        if (!path.endsWith('.vue')) {
-          possibleFileNames.push(path + '.vue')
-          possibleFileNames.push(path + '/index.vue')
-        }
-        if (!path.endsWith('.js')) {
-          possibleFileNames.push(path + '.js')
-          possibleFileNames.push(path + '/index.js')
-        }
-        if (!path.endsWith('.jsx')) {
-          possibleFileNames.push(path + '.jsx')
-          possibleFileNames.push(path + '/index.jsx')
-        }
+        Object.keys(this.possibleFileNamesMap).forEach((key) => {
+          if (!path.endsWith(`.${key}`)) {
+            this.possibleFileNamesMap[key].forEach((item) => {
+              possibleFileNames.push(path + item)
+            })
+          }
+        })
         possibleFileNames.push(path)
-
         return possibleFileNames
       })
       .catch(() => {
