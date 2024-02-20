@@ -2,17 +2,18 @@
  * @Author: atdow
  * @Date: 2017-08-21 14:59:59
  * @LastEditors: null
- * @LastEditTime: 2023-11-14 20:47:46
+ * @LastEditTime: 2024-02-20 19:05:41
  * @Description: file description
  */
 import * as vscode from 'vscode'
 const util = require('./util')
 const fs = require('fs')
-import { IAliasConfigsItem, ILineInfo } from './types'
+import { IAliasConfigsItem, ILineInfo, ISearchPattern } from './types'
 
 export default class JumperFileDefinitionProvider implements vscode.DefinitionProvider {
   aliasConfigs: IAliasConfigsItem[] = []
   globalComponentsPrefixConfigs: string[] = []
+  searchPattern: ISearchPattern = { include: '**/$1', exclude: '**/node_modules' }
   possibleFileNamesMap: { [key: string]: string[] } = {
     vue: ['.vue', '/index.vue'],
     js: ['.js', '/index.js'],
@@ -21,7 +22,15 @@ export default class JumperFileDefinitionProvider implements vscode.DefinitionPr
     tsx: ['.tsx', '/index.tsx']
   }
 
-  constructor(aliasConfigs: string[] = [], globalComponentsPrefixConfigs: string[] = []) {
+  constructor({
+    aliasConfigs = [],
+    globalComponentsPrefixConfigs = [],
+    searchPattern = { include: '', exclude: '' }
+  }: {
+    aliasConfigs: string[]
+    globalComponentsPrefixConfigs: string[]
+    searchPattern: ISearchPattern
+  }) {
     aliasConfigs.forEach((aliasConfigsItem) => {
       try {
         const aliasConfigsItemArr: string[] = aliasConfigsItem.split(':')
@@ -35,6 +44,8 @@ export default class JumperFileDefinitionProvider implements vscode.DefinitionPr
         // console.log("aliasConfigs:", aliasConfigs);
       }
     })
+
+    this.searchPattern = Object.assign({}, this.searchPattern, searchPattern)
     this.globalComponentsPrefixConfigs = globalComponentsPrefixConfigs
   }
 
@@ -178,7 +189,7 @@ export default class JumperFileDefinitionProvider implements vscode.DefinitionPr
           const upperCamelCaseText = util.upperCamelCaseTagName(selectedText)
           const kebabCaseText = util.kebabCaseTagName(selectedText)
           this.arrAddPossibleFileNames(possibleFileNames, upperCamelCaseText)
-          this.arrAddPossibleFileNames(kebabCaseText, upperCamelCaseText)
+          this.arrAddPossibleFileNames(possibleFileNames, kebabCaseText)
           // 有全局组件注册带特殊前缀的情况
           that.globalComponentsPrefixConfigs.forEach((globalComponentsPrefix) => {
             if (!selectedText.startsWith(globalComponentsPrefix)) {
@@ -206,7 +217,6 @@ export default class JumperFileDefinitionProvider implements vscode.DefinitionPr
             })
           }
         })
-        possibleFileNames.push(path)
         return possibleFileNames
       })
       .catch(() => {
@@ -215,7 +225,11 @@ export default class JumperFileDefinitionProvider implements vscode.DefinitionPr
   }
 
   searchFilePath(fileName: String): Thenable<vscode.Uri[]> {
-    return vscode.workspace.findFiles(`**/${fileName}`, '**/node_modules') // Returns promise
+    // Returns promise
+    return vscode.workspace.findFiles(
+      this.searchPattern.include.replace('$1', fileName as string),
+      this.searchPattern.exclude
+    )
   }
 
   provideDefinition(
@@ -226,7 +240,7 @@ export default class JumperFileDefinitionProvider implements vscode.DefinitionPr
     let filePaths: vscode.Uri[] = []
     return this.getComponentName(position, document).then((componentNames) => {
       // console.log("componentNames:", componentNames);
-      const searchPathActions: Thenable<vscode.Uri[]>[] = componentNames.map(this.searchFilePath)
+      const searchPathActions: Thenable<vscode.Uri[]>[] = componentNames.map((name) => this.searchFilePath(name))
       const searchPromises = Promise.all(searchPathActions) // pass array of promises
       return searchPromises.then(
         (paths) => {

@@ -136,6 +136,20 @@ export default MyComponent;
 </script>
 ```
 
+## 6. 自定义文件查找通配符
+
+查找组件时默认使用以下 pattern：
+
+```js
+{ include: '**/$1', exclude: '**/node_modules' }
+```
+
+如果不满足可以自定义配置：
+
+```json
+"vue-jumper.searchPattern.exclude": "**/{node_modules,build,dist}"
+```
+
 ## 版本
 
 * 2.5.0 新增跳转tsx组件支持
