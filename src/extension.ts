@@ -8,6 +8,7 @@
 'use strict'
 import * as vscode from 'vscode'
 import JumperFileDefinitionProvider from './JumperFileDefinitionProvider'
+import { ISearchPattern } from './types'
 
 const languageConfiguration: vscode.LanguageConfiguration = {
   wordPattern: /(\w+((-\w+)+)?)/
@@ -18,11 +19,16 @@ export function activate(context: vscode.ExtensionContext) {
   const supportedLanguages = ['vue']
   const aliasConfigs = configParams.get('aliasConfigs') as Array<string>
   const globalComponentsPrefixConfigs = configParams.get('globalComponentsPrefixConfigs') as Array<string>
+  const searchPattern = configParams.get('searchPattern') as ISearchPattern
 
   context.subscriptions.push(
     vscode.languages.registerDefinitionProvider(
       supportedLanguages,
-      new JumperFileDefinitionProvider(aliasConfigs, globalComponentsPrefixConfigs)
+      new JumperFileDefinitionProvider({
+        aliasConfigs,
+        globalComponentsPrefixConfigs,
+        searchPattern
+      })
     )
   )
 
