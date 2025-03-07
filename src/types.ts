@@ -15,3 +15,14 @@ export interface ILineInfo {
   path: string
   originPath: string
 }
+
+export interface ISearchPattern {
+  include: string
+  exclude: string
+}
+
+export interface IRule {
+  prefix: string
+  docUrl?: string
+  searchPattern: ISearchPattern
+}

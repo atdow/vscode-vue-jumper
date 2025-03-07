@@ -53,6 +53,19 @@
             "type": "string"
           },
           "description": "global components prefix config"
+        },
+        "vue-jumper.rules": {
+          "type": "array",
+          "default": [
+            {
+              "prefix": "*",
+              "searchPattern": {
+                "include": "**/$1",
+                "exclude": "**/{node_modules,build,dist}"
+              }
+            }
+          ],
+          "description": "component jump and doc rules"
         }
       }
     }

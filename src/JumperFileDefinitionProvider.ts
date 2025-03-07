@@ -2,17 +2,18 @@
  * @Author: atdow
  * @Date: 2017-08-21 14:59:59
  * @LastEditors: null
- * @LastEditTime: 2023-11-14 20:47:46
+ * @LastEditTime: 2024-02-20 19:05:41
  * @Description: file description
  */
 import * as vscode from 'vscode'
 const util = require('./util')
 const fs = require('fs')
-import { IAliasConfigsItem, ILineInfo } from './types'
+import { IAliasConfigsItem, ILineInfo, IRule } from './types'
 
 export default class JumperFileDefinitionProvider implements vscode.DefinitionProvider {
   aliasConfigs: IAliasConfigsItem[] = []
   globalComponentsPrefixConfigs: string[] = []
+  rules: IRule[] = []
   possibleFileNamesMap: { [key: string]: string[] } = {
     vue: ['.vue', '/index.vue'],
     js: ['.js', '/index.js'],
@@ -21,7 +22,15 @@ export default class JumperFileDefinitionProvider implements vscode.DefinitionPr
     tsx: ['.tsx', '/index.tsx']
   }
 
-  constructor(aliasConfigs: string[] = [], globalComponentsPrefixConfigs: string[] = []) {
+  constructor({
+    aliasConfigs = [],
+    globalComponentsPrefixConfigs = [],
+    rules = []
+  }: {
+    aliasConfigs: string[]
+    globalComponentsPrefixConfigs: string[]
+    rules: IRule[]
+  }) {
     aliasConfigs.forEach((aliasConfigsItem) => {
       try {
         const aliasConfigsItemArr: string[] = aliasConfigsItem.split(':')
@@ -35,7 +44,9 @@ export default class JumperFileDefinitionProvider implements vscode.DefinitionPr
         // console.log("aliasConfigs:", aliasConfigs);
       }
     })
+
     this.globalComponentsPrefixConfigs = globalComponentsPrefixConfigs
+    this.rules = rules
   }
 
   async judeLineType(line: String, keyword: string, document: vscode.TextDocument): Promise<ILineInfo> {
@@ -215,7 +226,14 @@ export default class JumperFileDefinitionProvider implements vscode.DefinitionPr
   }
 
   searchFilePath(fileName: String): Thenable<vscode.Uri[]> {
-    return vscode.workspace.findFiles(`**/${fileName}`, '**/node_modules') // Returns promise
+    const componentName = fileName as string
+    // 查找匹配的规则
+    const matchedRule =
+      this.rules.find((rule) => componentName.startsWith(rule.prefix)) || this.rules.find((rule) => rule.prefix === '*')
+
+    const pattern = matchedRule.searchPattern
+
+    return vscode.workspace.findFiles(pattern.include.replace('$1', componentName), pattern.exclude)
   }
 
   provideDefinition(
@@ -226,7 +244,7 @@ export default class JumperFileDefinitionProvider implements vscode.DefinitionPr
     let filePaths: vscode.Uri[] = []
     return this.getComponentName(position, document).then((componentNames) => {
       // console.log("componentNames:", componentNames);
-      const searchPathActions: Thenable<vscode.Uri[]>[] = componentNames.map(this.searchFilePath)
+      const searchPathActions: Thenable<vscode.Uri[]>[] = componentNames.map((name) => this.searchFilePath(name))
       const searchPromises = Promise.all(searchPathActions) // pass array of promises
       return searchPromises.then(
         (paths) => {
