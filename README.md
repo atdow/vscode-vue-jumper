@@ -8,7 +8,7 @@
 
 # vscode-vue-jumper
 
-vue文件跳转到文件定义支持。
+vue 文件跳转到文件定义支持。
 
 ![](./images/usage-demo.gif)
 
@@ -17,27 +17,26 @@ vue文件跳转到文件定义支持。
 支持大驼峰组件、中划线组件。
 
 ```html
-<my-component></my-component>
-<MyComponent></MyComponent>
+<my-component></my-component> <MyComponent></MyComponent>
 ```
 
-## 2. 支持import相对路径文件跳转
+## 2. 支持 import 相对路径文件跳转
 
 ```js
 import MyComponent form '../../component/MyComponent'
 import MyComponent2 form '../../component/MyComponent2.vue'
 ```
 
-## 3. 支持import别名路径文件跳转
+## 3. 支持 import 别名路径文件跳转
 
-import别名路径就是在vue.config.js，也就是在webpack中配置了 `alias` 别名
+import 别名路径就是在 vue.config.js，也就是在 webpack 中配置了 `alias` 别名
 
 ```js
 // vue.config.js
 export default {
-    chainWebpack: config => {
-        config.resolve.alias.set('@$', resolve('src'))
-    }
+  chainWebpack: (config) => {
+    config.resolve.alias.set('@$', resolve('src'))
+  }
 }
 ```
 
@@ -49,38 +48,38 @@ import MyComponent form '@/component/MyComponent'
 
 ![aliasConfigs](./images/aliasConfigs.png)
 
-## 4. 支持mixins引入组件注册跳转
+## 4. 支持 mixins 引入组件注册跳转
 
 ```html
 <template>
-    <div>
-        <MyComponent />
-    </div>
+  <div>
+    <MyComponent />
+  </div>
 </template>
 
 <script>
-    import mixins from "./mixins";
-    export default {
-        mixins: [mixins],
-        props: {},
-        data() {
-            return {};
-        },
-        components: {},
-    };
+  import mixins from './mixins'
+  export default {
+    mixins: [mixins],
+    props: {},
+    data() {
+      return {}
+    },
+    components: {}
+  }
 </script>
 ```
 
 ```js
 // mixins.js
-import MyComponent from "./modules/MyComponent";
+import MyComponent from './modules/MyComponent'
 export default {
-    data() {
-        return {}
-    },
-    components: {
-        MyComponent
-    }
+  data() {
+    return {}
+  },
+  components: {
+    MyComponent
+  }
 }
 ```
 
@@ -100,43 +99,43 @@ vue.use(PrefixMyComponent) // 组件注册
 
 ```js
 // components/MyComponent/index.js
-import MyComponent from './src/index.vue';
+import MyComponent from './src/index.vue'
 
 /* istanbul ignore next */
-MyComponent.install = function(Vue) {
-    Vue.component(MyComponent.name, MyComponent);
-};
+MyComponent.install = function (Vue) {
+  Vue.component(MyComponent.name, MyComponent)
+}
 
-export default MyComponent;
+export default MyComponent
 ```
 
 ```html
 <!-- components/MyComponent/src/index.vue -->
 <template>
-    <div>MyComponent</div>
+  <div>MyComponent</div>
 </template>
 
 <script>
-    export default {
-        name: 'PrefixMyComponent',
-    }
+  export default {
+    name: 'PrefixMyComponent'
+  }
 </script>
 ```
 
 ```html
 <!-- 使用 -->
 <template>
-    <prefix-my-component>MyComponent</prefix-my-component>
+  <prefix-my-component>MyComponent</prefix-my-component>
 </template>
 
 <script>
-    export default {
-        name: 'PrefixMyComponent',
-    }
+  export default {
+    name: 'PrefixMyComponent'
+  }
 </script>
 ```
 
-## 6. 自定义文件查找通配符
+## 6. 文件查找通配符配置
 
 查找组件时默认使用以下 pattern：
 
@@ -150,15 +149,32 @@ export default MyComponent;
 "vue-jumper.searchPattern.exclude": "**/{node_modules,build,dist}"
 ```
 
+## 7. 组件文档链接配置
+
+通过配置组件前缀和对应的文档地址，当光标悬浮在组件上时，可以快速跳转查看组件文档：
+
+```json
+"vue-jumper.componentDocs": [
+  {
+    "prefix": "uni-",
+    "url": "https://uniapp.dcloud.net.cn/component/uniui/{name}.html"
+  },
+  {
+    "prefix": "u-",
+    "url": "https://uviewui.com/components/{name}.html"
+  }
+]
+```
+
 ## 版本
 
-* 2.5.0 新增跳转tsx组件支持
-* 2.4.0 兼容其他写法匹配
-* 2.3.0 修复匹配错误
-* 2.2.0 修复windows兼容问题
-* 2.1.0 新增全局注册带特殊前缀组件跳转支持
-* 2.0.0 新增mixins引入组件注册跳转支持
-* 1.3.0-1.5.0 修复匹配错误
-* 1.2.0 增加组件重命名跳转
-* 1.1.0 支持多workspaceFolders工作区跳转
-* 1.0.0 支持基础跳转
+- 2.5.0 新增跳转 tsx 组件支持
+- 2.4.0 兼容其他写法匹配
+- 2.3.0 修复匹配错误
+- 2.2.0 修复 windows 兼容问题
+- 2.1.0 新增全局注册带特殊前缀组件跳转支持
+- 2.0.0 新增 mixins 引入组件注册跳转支持
+- 1.3.0-1.5.0 修复匹配错误
+- 1.2.0 增加组件重命名跳转
+- 1.1.0 支持多 workspaceFolders 工作区跳转
+- 1.0.0 支持基础跳转

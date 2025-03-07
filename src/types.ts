@@ -20,3 +20,8 @@ export interface ISearchPattern {
   include: string
   exclude: string
 }
+
+export interface IComponentDocsConfig {
+  prefix: string
+  url: string
+}

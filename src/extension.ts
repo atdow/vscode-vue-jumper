@@ -8,7 +8,8 @@
 'use strict'
 import * as vscode from 'vscode'
 import JumperFileDefinitionProvider from './JumperFileDefinitionProvider'
-import { ISearchPattern } from './types'
+import { ISearchPattern, IComponentDocsConfig } from './types'
+import provideVueComponentHover from './provideVueComponentHover'
 
 const languageConfiguration: vscode.LanguageConfiguration = {
   wordPattern: /(\w+((-\w+)+)?)/
@@ -20,7 +21,7 @@ export function activate(context: vscode.ExtensionContext) {
   const aliasConfigs = configParams.get('aliasConfigs') as Array<string>
   const globalComponentsPrefixConfigs = configParams.get('globalComponentsPrefixConfigs') as Array<string>
   const searchPattern = configParams.get('searchPattern') as ISearchPattern
-
+  const componentDocsConfig = configParams.get('componentDocs') as IComponentDocsConfig[]
   context.subscriptions.push(
     vscode.languages.registerDefinitionProvider(
       supportedLanguages,
@@ -30,6 +31,12 @@ export function activate(context: vscode.ExtensionContext) {
         searchPattern
       })
     )
+  )
+
+  context.subscriptions.push(
+    vscode.languages.registerHoverProvider(supportedLanguages, {
+      provideHover: (document, position) => provideVueComponentHover(document, position, componentDocsConfig)
+    })
   )
 
   /* Provides way to get selected text even if there is dash
