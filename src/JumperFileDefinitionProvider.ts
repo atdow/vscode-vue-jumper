@@ -206,7 +206,6 @@ export default class JumperFileDefinitionProvider implements vscode.DefinitionPr
             })
           }
         })
-        possibleFileNames.push(path)
         return possibleFileNames
       })
       .catch(() => {
