@@ -53,6 +53,14 @@
             "type": "string"
           },
           "description": "global components prefix config"
+        },
+        "vue-jumper.searchPattern": {
+          "type": "object",
+          "default": {
+            "include": "**/$1",
+            "exclude": "**/node_modules"
+          },
+          "description": "search file pattern"
         }
       }
     }

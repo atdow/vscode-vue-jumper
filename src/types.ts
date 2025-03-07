@@ -15,3 +15,8 @@ export interface ILineInfo {
   path: string
   originPath: string
 }
+
+export interface ISearchPattern {
+  include: string
+  exclude: string
+}
