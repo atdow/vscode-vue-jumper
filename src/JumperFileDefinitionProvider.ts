@@ -178,7 +178,7 @@ export default class JumperFileDefinitionProvider implements vscode.DefinitionPr
           const upperCamelCaseText = util.upperCamelCaseTagName(selectedText)
           const kebabCaseText = util.kebabCaseTagName(selectedText)
           this.arrAddPossibleFileNames(possibleFileNames, upperCamelCaseText)
-          this.arrAddPossibleFileNames(kebabCaseText, upperCamelCaseText)
+          this.arrAddPossibleFileNames(possibleFileNames, kebabCaseText)
           // 有全局组件注册带特殊前缀的情况
           that.globalComponentsPrefixConfigs.forEach((globalComponentsPrefix) => {
             if (!selectedText.startsWith(globalComponentsPrefix)) {
