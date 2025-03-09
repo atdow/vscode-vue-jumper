@@ -198,15 +198,22 @@ export default class JumperFileDefinitionProvider implements vscode.DefinitionPr
           })
           return possibleFileNames
         }
-        // TODO 下面这里可能会和vscode自带的查找逻辑有重复，可以做优化
-        Object.keys(this.possibleFileNamesMap).forEach((key) => {
-          if (!path.endsWith(`.${key}`)) {
+        // 检查 path 是否以任何一个 possibleFileNamesMap 的后缀结尾
+        const hasMatchedExtension = Object.keys(this.possibleFileNamesMap).some(
+          (key) => path.endsWith(`.${key}`) || path.endsWith(`/index.${key}`)
+        )
+
+        if (hasMatchedExtension) {
+          // 如果匹配到后缀，只添加 path 本身
+          possibleFileNames.push(path)
+        } else {
+          // 否则添加所有可能的后缀组合
+          Object.keys(this.possibleFileNamesMap).forEach((key) => {
             this.possibleFileNamesMap[key].forEach((item) => {
               possibleFileNames.push(path + item)
             })
-          }
-        })
-        possibleFileNames.push(path)
+          })
+        }
         return possibleFileNames
       })
       .catch(() => {
